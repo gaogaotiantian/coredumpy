@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "coredumpy"
+authors = [{name = "Tian Gao", email = "gaogaotiantian@hotmail.com"}]
+description = "A utility tool to dump python stacks"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+dynamic = ["version"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Bug Tracking",
+    "Topic :: System :: Logging",
+]
+
+[project.urls]
+Homepage = "https://github.com/gaogaotiantian/coredumpy"
+
+[project.scripts]
+coredumpy = "coredumpy:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "coredumpy.__version__"}
