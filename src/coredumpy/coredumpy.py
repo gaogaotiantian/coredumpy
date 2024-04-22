@@ -9,7 +9,7 @@ import os
 import pdb
 import tokenize
 import types
-import typing
+from typing import Callable, Optional, Union
 
 from .patch import patch_all
 from .py_object_proxy import PyObjectProxy
@@ -19,10 +19,10 @@ from .utils import get_dump_filename
 class Coredumpy:
     @classmethod
     def dump(cls,
-             frame: types.FrameType | None = None,
+             frame: Optional[types.FrameType] = None,
              *,
-             path: str | typing.Callable[[], str] | None = None,
-             directory: str | None = None):
+             path: Optional[Union[str, Callable[[], str]]] = None,
+             directory: Optional[str] = None):
         """
         dump the current frame stack to a file
 

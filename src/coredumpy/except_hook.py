@@ -3,7 +3,7 @@
 
 
 import sys
-import typing
+from typing import Callable, Optional, Union
 
 from .coredumpy import dump
 
@@ -11,8 +11,8 @@ from .coredumpy import dump
 _original_excepthook = sys.excepthook
 
 
-def patch_except(path: str | typing.Callable[[], str] | None = None,
-                 directory: str | None = None):
+def patch_except(path: Optional[Union[str, Callable[[], str]]] = None,
+                 directory: Optional[str] = None):
     """ Patch the excepthook to dump the frame stack when an unhandled exception occurs.
 
         @param path:
