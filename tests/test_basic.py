@@ -14,7 +14,7 @@ class TestBasic(TestBase):
                 return arg
             def f():
                 x = 142857
-                y = [3, {'a': (4, None)}]
+                y = [3, {'a': [4, None]}]
                 g(y)
             f()
         """
