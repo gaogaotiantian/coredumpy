@@ -2,8 +2,8 @@
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
 
-import os
 import sys
+import typing
 
 from .coredumpy import dump
 
@@ -11,16 +11,24 @@ from .coredumpy import dump
 _original_excepthook = sys.excepthook
 
 
-def _excepthook(type, value, traceback):
-    while traceback.tb_next:
-        traceback = traceback.tb_next
+def patch_except(path: str | typing.Callable[[], str] | None = None,
+                 directory: str | None = None):
+    """ Patch the excepthook to dump the frame stack when an unhandled exception occurs.
 
-    filename = os.path.abspath("coredumpy_dump")
-    dump(filename, traceback.tb_frame)
-    _original_excepthook(type, value, traceback)
-    print(f'Your frame stack has been dumped to "{filename}", '
-          f'open it with\ncoredumpy load {filename}')
+        @param path:
+            The path to save the dump file. It could be a string or a callable that returns a string.
+            if not specified, the default filename will be used
+        @param directory:
+            The directory to save the dump file, only works when path is not specified.
+    """
 
+    def _excepthook(type, value, traceback):
+        while traceback.tb_next:
+            traceback = traceback.tb_next
 
-def patch_excepthook():
+        filename = dump(traceback.tb_frame, path=path, directory=directory)
+        _original_excepthook(type, value, traceback)
+        print(f'Your frame stack has been dumped to "{filename}", '
+              f'open it with\ncoredumpy load {filename}')
+
     sys.excepthook = _excepthook

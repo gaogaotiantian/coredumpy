@@ -10,7 +10,7 @@ class TestBasic(TestBase):
         script = """
             import coredumpy
             def g(arg):
-                coredumpy.dump("coredumpy_dump")
+                coredumpy.dump(path="coredumpy_dump")
                 return arg
             def f():
                 x = 142857
@@ -36,7 +36,7 @@ class TestBasic(TestBase):
     def test_except(self):
         script = """
             import coredumpy
-            coredumpy.patch_excepthook()
+            coredumpy.patch_except(path='coredumpy_dump')
             def g(arg):
                 return 1 / arg
             g(0)
