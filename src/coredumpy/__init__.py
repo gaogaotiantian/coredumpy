@@ -5,7 +5,7 @@
 __version__ = "0.0.1"
 
 from .coredumpy import Coredumpy, dump, load
-from .except_hook import patch_excepthook
+from .except_hook import patch_except
 from .main import main
 from .type_support import add_supports
 
@@ -16,5 +16,5 @@ __all__ = [
     "dump",
     "load",
     "main",
-    "patch_excepthook",
+    "patch_except",
 ]

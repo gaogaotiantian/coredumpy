@@ -6,19 +6,41 @@ import inspect
 import json
 import linecache
 import os
-import tokenize
 import pdb
+import tokenize
+import types
+from typing import Callable, Optional, Union
 
 from .patch import patch_all
 from .py_object_proxy import PyObjectProxy
+from .utils import get_dump_filename
 
 
 class Coredumpy:
     @classmethod
-    def dump(cls, path, frame=None):
+    def dump(cls,
+             frame: Optional[types.FrameType] = None,
+             *,
+             path: Optional[Union[str, Callable[[], str]]] = None,
+             directory: Optional[str] = None):
+        """
+        dump the current frame stack to a file
+
+        @param frame:
+            The top frame to dump, if not specified, the frame of the caller will be used
+        @param path:
+            The path to save the dump file. It could be a string or a callable that returns a string.
+            if not specified, the default filename will be used
+        @param directory:
+            The directory to save the dump file, only works when path is not specified.
+        @return:
+            The path of the dump file
+        """
         files = set()
         if frame is None:
-            frame = inspect.currentframe().f_back
+            inner_frame = inspect.currentframe()
+            assert inner_frame is not None
+            frame = inner_frame.f_back
         curr_frame = frame
         while frame:
             filename = frame.f_code.co_filename
@@ -29,7 +51,9 @@ class Coredumpy:
             PyObjectProxy.add_object(frame)
             frame = frame.f_back
 
-        with open(path, "w") as f:
+        output_file = get_dump_filename(curr_frame, path, directory)
+
+        with open(output_file, "w") as f:
             json.dump({
                 "objects": PyObjectProxy._objects,
                 "frame": str(id(curr_frame)),
@@ -39,6 +63,8 @@ class Coredumpy:
             }, f)
 
         PyObjectProxy.clear()
+
+        return output_file
 
     @classmethod
     def load(cls, path):

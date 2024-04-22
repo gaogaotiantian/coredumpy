@@ -9,28 +9,36 @@ coredumpy saves your crash site so you can better debug your python program.
 * Easy to use
 * Supports pdb interface
 * Does not rely on pickle
-* Dump file is independent of environment
+* Open the dump file on any machine
 
 ## Usage
 
 ### dump
 
-You can dump any frame (and its parent frames) manually by
+You can dump the current frame stack by
 
 ```python
-from coredumpy import dump
+import coredumpy
 
-dump("coredumpy_dump", frame)
-
-# without frame argument, it will dump the current frame stack
-dump("coredumpy_dump")
+# Without frame argument, top frame will be the caller of coredumpy.dump()
+coredumpy.dump()
+# Specify a specific frame as the top frame to dump
+coredumpy.dump(frame)
+# Specify a filename to save the dump, without it a unique name will be generated
+coredumpy.dump(path='coredumpy.dump')
+# You can use a function for path
+coredumpy.dump(path=lambda: f"coredumpy_{time.time()}.dump")
+# Specify a directory to keep the dump
+coredumpy.dump(directory='./dumps')
 ```
 
 You can hook the exception so a dump will be automatically created if your program crashes due to an exception
 
 ```python
-from coredumpy import patch_excepthook
-patch_excepthook()
+import coredumpy
+coredumpy.patch_except()
+# patch_except takes the same path/directory arguments as dump
+# coredumpy.patch_except(directory='./dumps')
 ```
 
 ### load
@@ -52,6 +60,8 @@ but none of the user-created objects will have the actual functionality.
 ## Disclaimer
 
 This library is still in development phase and is not recommended for production use.
+
+The APIs could change during development phase.
 
 ## License
 
