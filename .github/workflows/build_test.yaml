@@ -44,7 +44,9 @@ jobs:
         coverage xml -i
       env:
         COVERAGE_RUN: True
-    - name: Upload report to Codecov
-      uses: codecov/codecov-action@v3
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v4.0.1
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: gaogaotiantian/coredumpy
         file: ./coverage.xml
