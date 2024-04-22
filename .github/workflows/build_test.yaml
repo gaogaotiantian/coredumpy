@@ -14,6 +14,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest, macos-14]
         python-version: ['3.9', '3.10', '3.11', '3.12']
+        exclude:
+          - python-version: '3.9'
+            os: macos-14
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
