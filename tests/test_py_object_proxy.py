@@ -12,18 +12,31 @@ class TestPyObjectProxy(TestBase):
         PyObjectProxy.clear()
         return super().tearDown()
 
+    def convert_object(self, obj):
+        data = PyObjectProxy.add_object(obj)
+        for i, o in PyObjectProxy._objects.items():
+            PyObjectProxy.load_object(i, o)
+        return PyObjectProxy.load_object(str(id(obj)), data)
+
     def test_basic(self):
         class A:
             def __init__(self, x):
                 self.x = x
         obj = A(142857)
-        data = PyObjectProxy.add_object(obj)
-        for i, o in PyObjectProxy._objects.items():
-            PyObjectProxy.load_object(i, o)
-        proxy = PyObjectProxy.load_object(str(id(obj)), data)
+        proxy = self.convert_object(obj)
         self.assertEqual(proxy.x, 142857)
         self.assertEqual(dir(proxy), ['x'])
         self.assertIn('<A object at 0x', repr(proxy))
+
+    def test_tuple(self):
+        obj = (1, 2, 3)
+        proxy = self.convert_object(obj)
+        self.assertEqual(proxy, (1, 2, 3))
+
+    def test_set(self):
+        obj = {1, 2, 3}
+        proxy = self.convert_object(obj)
+        self.assertEqual(proxy, {1, 2, 3})
 
     def test_nonexist_attr(self):
         class A:

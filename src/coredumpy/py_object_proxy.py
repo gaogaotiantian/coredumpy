@@ -35,7 +35,7 @@ class PyObjectProxy:
             return {"type": "None"}
         elif isinstance(obj, (int, float, str)):
             return {"type": type(obj).__name__, "value": obj}
-        elif isinstance(obj, (list, tuple)):
+        elif isinstance(obj, (list, tuple, set)):
             for item in obj:
                 cls.add_object(item)
             return {"type": type(obj).__name__, "value": [str(id(item)) for item in obj]}
@@ -58,8 +58,12 @@ class PyObjectProxy:
             proxy = None
         elif data["type"] in ("int", "float", "str"):
             proxy = data["value"]
-        elif data["type"] in ("list", "tuple"):
+        elif data["type"] == "list":
             proxy = [cls.load_object(item_id, cls._objects[item_id]) for item_id in data["value"]]
+        elif data["type"] == "tuple":
+            proxy = tuple(cls.load_object(item_id, cls._objects[item_id]) for item_id in data["value"])
+        elif data["type"] == "set":
+            proxy = set(cls.load_object(item_id, cls._objects[item_id]) for item_id in data["value"])
         elif data["type"] == "dict":
             proxy = {cls.load_object(key_id, cls._objects[key_id]):
                      cls.load_object(value_id, cls._objects[value_id])
