@@ -20,7 +20,7 @@ class TestUtils(TestBase):
 
         frame = FakeFrame("test_get_dump_filename")
         filename = get_dump_filename(frame, None, None)
-        self.assertTrue(filename.startswith("/"))
+        self.assertEqual(filename, os.path.abspath(filename))
         self.assertIn("test_get_dump_filename", filename)
 
         filename = get_dump_filename(frame, "test.dump", None)
@@ -30,7 +30,7 @@ class TestUtils(TestBase):
         self.assertEqual(filename, os.path.abspath("test.dump"))
 
         filename = get_dump_filename(frame, None, "dir")
-        self.assertTrue(filename.startswith("/"))
+        self.assertEqual(filename, os.path.abspath(filename))
         self.assertIn("test_get_dump_filename", filename)
         self.assertIn("dir", filename)
 
