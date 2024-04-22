@@ -114,8 +114,6 @@ class PyObjectProxy:
             self._coredumpy_attrs[key] = value
 
     def __getattr__(self, item):
-        if item.startswith("_coredumpy_"):
-            return self.__dict__[item]
         if item in self._coredumpy_attrs:
             return type(self)._proxies[self._coredumpy_attrs[item]]
         raise AttributeError(f"'{self._coredumpy_type}' object has no attribute '{item}'")
