@@ -53,7 +53,7 @@ class Coredumpy:
         pdb_instance = pdb.Pdb()
         pdb_instance.reset()
         pdb_instance.interaction(frame, None)
-        PyObjectProxy.clear()
+        PyObjectProxy.clear()  # pragma: no cover
 
 
 dump = Coredumpy.dump
