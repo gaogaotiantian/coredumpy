@@ -23,8 +23,11 @@ class PyObjectProxy:
 
     @classmethod
     def add_object(cls, obj):
-        if id(obj) not in cls._objects:
+        if str(id(obj)) not in cls._objects:
+            # label the id
+            cls._objects[str(id(obj))] = {}
             cls._objects[str(id(obj))] = cls.dump_object(obj)
+        return cls._objects[str(id(obj))]
 
     @classmethod
     def dump_object(cls, obj):
@@ -77,7 +80,12 @@ class PyObjectProxy:
     @classmethod
     def default_encode(cls, obj):
         data = {"type": type(obj).__name__, "attrs": {}}
-        if isinstance(obj, (types.ModuleType, types.FunctionType, types.BuiltinFunctionType)):
+        if isinstance(obj, (types.ModuleType,
+                            types.FunctionType,
+                            types.BuiltinFunctionType,
+                            types.LambdaType,
+                            types.MethodType,
+                            )):
             return data
         for attr, value in inspect.getmembers(obj):
             if not attr.startswith("__") and not callable(value):
