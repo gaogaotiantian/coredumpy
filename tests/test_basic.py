@@ -2,6 +2,9 @@
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
 
+import os
+import tempfile
+
 from .base import TestBase
 
 
@@ -32,6 +35,19 @@ class TestBasic(TestBase):
         self.assertIn("script.py(4)g()", stdout)
         self.assertIn("[3, {'a': [4, None]}]", stdout)
         self.assertIn("142857", stdout)
+
+    def test_directory(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            child_dir = os.path.join(tmpdir, "child")
+            script = f"""
+                import coredumpy
+                coredumpy.dump(directory="{tmpdir}")
+                coredumpy.dump(directory="{tmpdir}")
+                coredumpy.dump(directory="{child_dir}")
+            """
+            self.run_script(script)
+            self.assertEqual(len(os.listdir(tmpdir)), 3)
+            self.assertEqual(len(os.listdir(child_dir)), 1)
 
     def test_except(self):
         script = """

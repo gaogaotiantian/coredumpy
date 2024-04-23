@@ -8,6 +8,7 @@ from .coredumpy import Coredumpy, dump, load
 from .except_hook import patch_except
 from .main import main
 from .type_support import add_supports
+from .unittest_hook import patch_unittest
 
 add_supports()
 
@@ -17,4 +18,5 @@ __all__ = [
     "load",
     "main",
     "patch_except",
+    "patch_unittest",
 ]

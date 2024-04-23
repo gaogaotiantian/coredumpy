@@ -9,6 +9,7 @@ import os
 import pdb
 import tokenize
 import types
+import warnings
 from typing import Callable, Optional, Union
 
 from .patch import patch_all
@@ -48,18 +49,26 @@ class Coredumpy:
             if filename not in files:
                 files.add(filename)
 
-            PyObjectProxy.add_object(frame)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                PyObjectProxy.add_object(frame)
             frame = frame.f_back
 
         output_file = get_dump_filename(curr_frame, path, directory)
 
+        file_lines = {}
+
+        for filename in files:
+            if os.path.exists(filename):
+                with tokenize.open(filename) as f:
+                    file_lines[filename] = f.readlines()
+
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
         with open(output_file, "w") as f:
             json.dump({
                 "objects": PyObjectProxy._objects,
                 "frame": str(id(curr_frame)),
-                "files": {filename: tokenize.open(filename).readlines()
-                          for filename in files
-                          if os.path.exists(filename)}
+                "files": file_lines,
             }, f)
 
         PyObjectProxy.clear()

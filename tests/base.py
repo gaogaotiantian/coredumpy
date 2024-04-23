@@ -32,7 +32,7 @@ class TestBase(unittest.TestCase):
             pass
         return stdout, stderr
 
-    def run_script(self, script):
+    def run_script(self, script, expected_returncode=0):
         script = textwrap.dedent(script)
         with tempfile.TemporaryDirectory() as tmpdir:
             with open(f"{tmpdir}/script.py", "w") as f:
@@ -40,6 +40,8 @@ class TestBase(unittest.TestCase):
             process = subprocess.Popen(normalize_commands(["python", f"{tmpdir}/script.py"]),
                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = process.communicate()
+            self.assertEqual(process.returncode, expected_returncode,
+                             f"script failed with return code {process.returncode}\n{stderr}")
             stdout = stdout.decode()
             stderr = stderr.decode()
         return stdout, stderr
