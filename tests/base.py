@@ -40,8 +40,8 @@ class TestBase(unittest.TestCase):
             process = subprocess.Popen(normalize_commands(["python", f"{tmpdir}/script.py"]),
                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = process.communicate()
-            self.assertEqual(process.returncode, expected_returncode,
-                             f"script failed with return code {process.returncode}\n{stderr}")
             stdout = stdout.decode()
             stderr = stderr.decode()
+            self.assertEqual(process.returncode, expected_returncode,
+                             f"script failed with return code {process.returncode}\n{stderr}")
         return stdout, stderr

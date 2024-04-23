@@ -8,16 +8,19 @@ from coredumpy.utils import get_dump_filename
 from .base import TestBase
 
 
+class FakeCode:
+    def __init__(self, name):
+        self.co_name = name
+
+
+class FakeFrame:
+    def __init__(self, name):
+        self.f_code = FakeCode(name)
+
+
 class TestUtils(TestBase):
+
     def test_get_dump_filename(self):
-        class FakeFrame:
-            def __init__(self, name):
-                self.f_code = FakeCode(name)
-
-        class FakeCode:
-            def __init__(self, name):
-                self.co_name = name
-
         frame = FakeFrame("test_get_dump_filename")
         filename = get_dump_filename(frame, None, None)
         self.assertEqual(filename, os.path.abspath(filename))
@@ -36,3 +39,9 @@ class TestUtils(TestBase):
 
         with self.assertRaises(ValueError):
             filename = get_dump_filename(frame, "test.dump", "dir")
+
+    def test_escape_name(self):
+        frame = FakeFrame("<module>")
+        filename = get_dump_filename(frame, None, None)
+        self.assertNotIn("<", filename)
+        self.assertNotIn(">", filename)

@@ -4,6 +4,7 @@
 
 import datetime
 import os
+import re
 
 
 def get_dump_filename(frame, path, directory):
@@ -15,6 +16,8 @@ def get_dump_filename(frame, path, directory):
         return os.path.abspath(path)
 
     funcname = os.path.basename(frame.f_code.co_name)
+    funcname = re.sub(r"[^a-zA-Z0-9_]", "", funcname)
+
     d = datetime.datetime.now()
     filename = f"coredumpy_{funcname}_{d.strftime('%Y%m%d_%H%M%S_%f')}.dump"
 
