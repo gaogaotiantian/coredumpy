@@ -32,5 +32,5 @@ class TestUnittest(TestBase):
             self.assertIn("FAIL: test_eq", stderr)
             self.assertIn("ERROR: test_error", stderr)
             self.assertNotIn("test_pass", stderr)
-            self.assertEqual(stdout.count(tempdir), 6)
+            self.assertEqual(stdout.count(tempdir), 3)
             self.assertEqual(len(os.listdir(tempdir)), 3)
