@@ -30,8 +30,8 @@ def patch_unittest(path: Optional[Union[str, Callable[[], str]]] = None,
             filename = dump(tb.tb_frame, path=path, directory=directory)
             print(f'Your frame stack has been dumped to "{filename}", '
                   f'open it with\ncoredumpy load {filename}')
-        except Exception:
-            pass  # pragma: no cover
+        except Exception:  # pragma: no cover
+            pass
         _original_addError(self, test, err)
 
     def addFailure(self, test, err):
@@ -42,8 +42,8 @@ def patch_unittest(path: Optional[Union[str, Callable[[], str]]] = None,
             filename = dump(tb.tb_frame, path=path, directory=directory)
             print(f'Your frame stack has been dumped to "{filename}", '
                   f'open it with\ncoredumpy load {filename}')
-        except Exception:
-            pass  # pragma: no cover
+        except Exception:  # pragma: no cover
+            pass
         _original_addFailure(self, test, err)
 
     unittest.TestResult.addError = addError  # type: ignore
