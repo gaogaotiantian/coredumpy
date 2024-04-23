@@ -15,11 +15,12 @@ def get_dump_filename(frame, path, directory):
             return os.path.abspath(path())
         return os.path.abspath(path)
 
-    funcname = os.path.basename(frame.f_code.co_name)
+    funcname = frame.f_code.co_name
+    lineno = frame.f_lineno
     funcname = re.sub(r"[^a-zA-Z0-9_]", "", funcname)
 
     d = datetime.datetime.now()
-    filename = f"coredumpy_{funcname}_{d.strftime('%Y%m%d_%H%M%S_%f')}.dump"
+    filename = f"coredumpy_{funcname}_{lineno}_{d.strftime('%Y%m%d_%H%M%S_%f')}.dump"
 
     if directory is None:
         return os.path.abspath(filename)
