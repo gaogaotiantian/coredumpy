@@ -38,6 +38,11 @@ class TestPyObjectProxy(TestBase):
         proxy = self.convert_object(obj)
         self.assertEqual(proxy, {1, 2, 3})
 
+    def test_bool(self):
+        obj = True
+        proxy = self.convert_object(obj)
+        self.assertEqual(proxy, True)
+
     def test_nonexist_attr(self):
         class A:
             def __init__(self, x):
