@@ -3,11 +3,12 @@
 
 
 import os
+import sys
 
 
 def normalize_commands(commands):
     if os.getenv("COVERAGE_RUN"):
-        if commands[0] == "python":
+        if commands[0] == "python" or commands[0] == sys.executable:
             commands = ["coverage", "run", "--parallel-mode"] + commands[1:]
         elif commands[0] == "coredumpy":
             commands = ["coverage", "run", "--parallel-mode", "-m", "coredumpy"] + commands[1:]

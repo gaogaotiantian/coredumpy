@@ -15,7 +15,17 @@ coredumpy saves your crash site so you can better debug your python program.
 
 ### dump
 
-You can dump the current frame stack by
+In most cases, you only need to hook `coredumpy` to some triggers
+
+```python
+import coredumpy
+# Create a dump in "./dumps" when there's an unhandled exception
+coredumpy.patch_except(directory='./dumps')
+# Create a dump in "./dumps" when there's a unittest failure/error
+coredumpy.patch_unittest(directory='./dumps')
+```
+
+Or you can dump the current frame stack manually
 
 ```python
 import coredumpy
@@ -30,15 +40,6 @@ coredumpy.dump(path='coredumpy.dump')
 coredumpy.dump(path=lambda: f"coredumpy_{time.time()}.dump")
 # Specify a directory to keep the dump
 coredumpy.dump(directory='./dumps')
-```
-
-You can hook the exception so a dump will be automatically created if your program crashes due to an exception
-
-```python
-import coredumpy
-coredumpy.patch_except()
-# patch_except takes the same path/directory arguments as dump
-# coredumpy.patch_except(directory='./dumps')
 ```
 
 ### load
