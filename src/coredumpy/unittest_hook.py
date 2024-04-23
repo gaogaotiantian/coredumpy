@@ -26,18 +26,24 @@ def patch_unittest(path: Optional[Union[str, Callable[[], str]]] = None,
         tb = err[2]
         while tb.tb_next:
             tb = tb.tb_next
-        filename = dump(tb.tb_frame, path=path, directory=directory)
-        print(f'Your frame stack has been dumped to "{filename}", '
-              f'open it with\ncoredumpy load {filename}')
+        try:
+            filename = dump(tb.tb_frame, path=path, directory=directory)
+            print(f'Your frame stack has been dumped to "{filename}", '
+                  f'open it with\ncoredumpy load {filename}')
+        except Exception:
+            pass  # pragma: no cover
         _original_addError(self, test, err)
 
     def addFailure(self, test, err):
         tb = err[2]
         while tb.tb_next:
             tb = tb.tb_next
-        filename = dump(tb.tb_frame, path=path, directory=directory)
-        print(f'Your frame stack has been dumped to "{filename}", '
-              f'open it with\ncoredumpy load {filename}')
+        try:
+            filename = dump(tb.tb_frame, path=path, directory=directory)
+            print(f'Your frame stack has been dumped to "{filename}", '
+                  f'open it with\ncoredumpy load {filename}')
+        except Exception:
+            pass  # pragma: no cover
         _original_addFailure(self, test, err)
 
     unittest.TestResult.addError = addError  # type: ignore
