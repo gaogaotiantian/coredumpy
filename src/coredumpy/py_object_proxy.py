@@ -33,7 +33,7 @@ class PyObjectProxy:
     def dump_object(cls, obj):
         if obj is None:
             return {"type": "None"}
-        elif isinstance(obj, (int, float, str)):
+        elif isinstance(obj, (int, float, str, bool)):
             return {"type": type(obj).__name__, "value": obj}
         elif isinstance(obj, (list, tuple, set)):
             for item in obj:
@@ -56,7 +56,7 @@ class PyObjectProxy:
             raise ValueError("Object not found")
         if data["type"] == "None":
             proxy = None
-        elif data["type"] in ("int", "float", "str"):
+        elif data["type"] in ("int", "float", "str", "bool"):
             proxy = data["value"]
         elif data["type"] == "list":
             proxy = [cls.load_object(item_id, cls._objects[item_id]) for item_id in data["value"]]
