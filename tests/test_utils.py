@@ -19,7 +19,6 @@ class FakeFrame:
 
 
 class TestUtils(TestBase):
-
     def test_get_dump_filename(self):
         frame = FakeFrame("test_get_dump_filename")
         filename = get_dump_filename(frame, None, None)
