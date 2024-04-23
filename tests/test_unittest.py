@@ -15,7 +15,7 @@ class TestUnittest(TestBase):
             script = f"""
                 import unittest
                 from coredumpy import patch_unittest
-                patch_unittest(directory="{tempdir}")
+                patch_unittest(directory={repr(tempdir)})
                 class TestUnittest(unittest.TestCase):
                     def test_bool(self):
                         self.assertTrue(False)
