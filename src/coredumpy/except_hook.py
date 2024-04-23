@@ -28,7 +28,7 @@ def patch_except(path: Optional[Union[str, Callable[[], str]]] = None,
 
         filename = dump(traceback.tb_frame, path=path, directory=directory)
         _original_excepthook(type, value, traceback)
-        print(f'Your frame stack has been dumped to "{filename}", '
-              f'open it with\ncoredumpy load {filename}')
+        print(f'Your frame stack is dumped, open it with\n'
+              f'coredumpy load {filename}')
 
     sys.excepthook = _excepthook
