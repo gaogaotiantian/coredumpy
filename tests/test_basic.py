@@ -41,9 +41,9 @@ class TestBasic(TestBase):
             child_dir = os.path.join(tmpdir, "child")
             script = f"""
                 import coredumpy
-                coredumpy.dump(directory="{tmpdir}")
-                coredumpy.dump(directory="{tmpdir}")
-                coredumpy.dump(directory="{child_dir}")
+                coredumpy.dump(directory={repr(tmpdir)})
+                coredumpy.dump(directory={repr(tmpdir)})
+                coredumpy.dump(directory={repr(child_dir)})
             """
             self.run_script(script)
             self.assertEqual(len(os.listdir(tmpdir)), 3)
