@@ -25,8 +25,8 @@ class TestBase(unittest.TestCase):
                                        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             stdout, stderr = process.communicate("\n".join(commands).encode())
-            stdout = stdout.decode()
-            stderr = stderr.decode()
+            stdout = stdout.decode(errors='backslashreplace')
+            stderr = stderr.decode(errors='backslashreplace')
         try:
             os.remove(dumppath)
         except FileNotFoundError:
@@ -41,8 +41,8 @@ class TestBase(unittest.TestCase):
             process = subprocess.Popen(normalize_commands([sys.executable, f"{tmpdir}/script.py"]),
                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = process.communicate()
-            stdout = stdout.decode()
-            stderr = stderr.decode()
+            stdout = stdout.decode(errors='backslashreplace')
+            stderr = stderr.decode(errors='backslashreplace')
             self.assertEqual(process.returncode, expected_returncode,
                              f"script failed with return code {process.returncode}\n{stderr}")
         return stdout, stderr
