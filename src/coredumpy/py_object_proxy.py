@@ -83,10 +83,11 @@ class PyObjectProxy:
 
     @classmethod
     def default_encode(cls, obj):
-        if cls.__module__ in ("builtins", "__main__"):
-            typename = type(obj).__qualname__
+        obj_type = type(obj)
+        if obj_type.__module__ in ("builtins", "__main__"):
+            typename = obj_type.__qualname__
         else:
-            typename = f"{cls.__module__}.{type(obj).__qualname__}"
+            typename = f"{obj_type.__module__}.{obj_type.__qualname__}"
 
         data = {"type": typename, "attrs": {}}
         if isinstance(obj, (types.ModuleType,

@@ -46,6 +46,11 @@ class TestPyObjectProxy(TestBase):
         proxy = self.convert_object(obj)
         self.assertEqual(proxy, True)
 
+    def test_builtins(self):
+        obj = object()
+        proxy = self.convert_object(obj)
+        self.assertEqual(proxy._coredumpy_type, "object")
+
     def test_module(self):
         import os
         proxy = self.convert_object(os)
