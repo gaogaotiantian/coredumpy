@@ -2,18 +2,22 @@
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
 
+import importlib
 import types
 
 from .py_object_proxy import PyObjectProxy
 
 
 def module_encoder(obj):
-    return {"type": "_builtin_module", "value": obj.__name__}
+    return {"type": "module", "value": obj.__name__}
 
 
 def module_decoder(id, data):
-    return __import__(data["value"])
+    try:
+        return importlib.import_module(data["value"])
+    except ImportError:
+        return PyObjectProxy.default_decode(id, data)
 
 
 def add_supports():
-    PyObjectProxy.add_support(types.ModuleType, "_builtin_module", module_encoder, module_decoder)
+    PyObjectProxy.add_support(types.ModuleType, "module", module_encoder, module_decoder)

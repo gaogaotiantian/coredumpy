@@ -2,6 +2,9 @@
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
 
+import importlib
+import sys
+
 from coredumpy.py_object_proxy import PyObjectProxy
 
 from .base import TestBase
@@ -42,6 +45,23 @@ class TestPyObjectProxy(TestBase):
         obj = True
         proxy = self.convert_object(obj)
         self.assertEqual(proxy, True)
+
+    def test_module(self):
+        import os
+        proxy = self.convert_object(os)
+        self.assertEqual(proxy, os)
+
+        # Create a module, then delete the file before converting
+        with open("temp_module_for_test.py", "w") as f:
+            f.write("pass")
+
+        temp_module_for_test = importlib.import_module("temp_module_for_test")
+        data = PyObjectProxy.add_object(temp_module_for_test)
+
+        sys.modules.pop("temp_module_for_test")
+        os.remove("temp_module_for_test.py")
+        proxy = PyObjectProxy.load_object(str(id(temp_module_for_test)), data)
+        self.assertEqual(proxy._coredumpy_type, "module")
 
     def test_nonexist_attr(self):
         class A:
