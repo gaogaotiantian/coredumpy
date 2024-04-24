@@ -123,10 +123,14 @@ class PyObjectProxy:
                             types.MethodType,
                             )):
             return data
-        for attr, value in inspect.getmembers(obj):
-            if not attr.startswith("__") and not callable(value):
-                cls._add_object(value)
-                data["attrs"][attr] = str(id(value))
+        try:
+            for attr, value in inspect.getmembers(obj):
+                if not attr.startswith("__") and not callable(value):
+                    cls._add_object(value)
+                    data["attrs"][attr] = str(id(value))
+        except Exception:  # pragma: no cover
+            # inspect.getmembers may fail on some objects
+            pass
         return data
 
     @classmethod

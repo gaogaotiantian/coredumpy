@@ -31,7 +31,7 @@ def patch_unittest(path: Optional[Union[str, Callable[[], str]]] = None,
             print(f'Your frame stack is dumped, open it with\n'
                   f'coredumpy load {filename}')
         except Exception:  # pragma: no cover
-            pass
+            print("Failed to dump the frame stack.")
         _original_addError(self, test, err)
 
     def addFailure(self, test, err):
@@ -43,7 +43,7 @@ def patch_unittest(path: Optional[Union[str, Callable[[], str]]] = None,
             print(f'Your frame stack is dumped, open it with\n'
                   f'coredumpy load {filename}')
         except Exception:  # pragma: no cover
-            pass
+            print("Failed to dump the frame stack.")
         _original_addFailure(self, test, err)
 
     unittest.TestResult.addError = addError  # type: ignore

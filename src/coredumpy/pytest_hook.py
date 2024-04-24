@@ -17,7 +17,6 @@ def pytest_addoption(parser):
 
 
 def pytest_exception_interact(node, call, report):
-    print("exception interact trigger")
     if not node.config.getoption("--enable-coredumpy"):
         return
 
@@ -30,5 +29,5 @@ def pytest_exception_interact(node, call, report):
             filename = coredumpy.dump(tb.tb_frame, directory=node.config.getoption("--coredumpy-dir"))
             print(f'Your frame stack is dumped, open it with\n'
                   f'coredumpy load {filename}')
-        except Exception as e:
-            print(e)
+        except Exception:
+            print("Failed to dump the frame stack.")
