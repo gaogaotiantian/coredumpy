@@ -51,6 +51,18 @@ class TestPyObjectProxy(TestBase):
         proxy = self.convert_object(obj)
         self.assertEqual(proxy._coredumpy_type, "object")
 
+    def test_recursion(self):
+        class A:
+            @property
+            def parent(self):
+                return A()
+
+        obj = A()
+        proxy = self.convert_object(obj)
+        for i in range(50):
+            self.assertIn("A", proxy._coredumpy_type)
+            proxy = proxy.parent
+
     def test_module(self):
         import os
         proxy = self.convert_object(os)
@@ -80,3 +92,4 @@ class TestPyObjectProxy(TestBase):
 
     def test_invalid(self):
         self.assertEqual(PyObjectProxy.load_object("1", None), _unknown)
+        self.assertEqual(repr(_unknown), "<Unknown Object>")

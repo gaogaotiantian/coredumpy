@@ -29,5 +29,5 @@ def pytest_exception_interact(node, call, report):
             filename = coredumpy.dump(tb.tb_frame, directory=node.config.getoption("--coredumpy-dir"))
             print(f'Your frame stack is dumped, open it with\n'
                   f'coredumpy load {filename}')
-        except Exception:
+        except Exception:  # pragma: no cover
             print("Failed to dump the frame stack.")
