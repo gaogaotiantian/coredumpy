@@ -29,11 +29,10 @@ class TestPytest(TestBase):
                 import pytest
                 import os
                 rootdir = os.path.dirname(__file__)
-                pytest.main(["--enable-coredumpy", "--coredumpy-dir", {repr(dump_path)}, "--rootdir", rootdir, {repr(test_path)}])
+                pytest.main(["--enable-coredumpy", "--coredumpy-dir", {repr(dump_path)},
+                             "--rootdir", rootdir, {repr(test_path)}])
             """
             stdout, stderr = self.run_script(script)
-            print(dump_path, test_path)
-            print(stderr, stdout)
             self.assertEqual(len(os.listdir(dump_path)), 2,
                              f"The dump directory has {os.listdir(dump_path)}\n{stdout}\n{stderr}")
 
