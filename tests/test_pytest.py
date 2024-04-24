@@ -12,7 +12,7 @@ from .base import TestBase
 class TestPytest(TestBase):
     def test_pytest(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            test = textwrap.dedent(f"""
+            test = textwrap.dedent("""
                 import pytest
                 import os
                 def test_for_pytest_equal():
@@ -32,7 +32,7 @@ class TestPytest(TestBase):
                 pytest.main(["--enable-coredumpy", "--coredumpy-dir", {repr(dump_path)}, {repr(test_path)}])
             """
             self.run_script(script)
-            self.assertEqual(len(os.listdir(dump_path)), 2)
+            self.assertEqual(len(os.listdir(dump_path)), 2, f"The dump directory has {os.listdir(dump_path)}")
 
             # Without the enable, it should not produce dumps
             script = f"""
