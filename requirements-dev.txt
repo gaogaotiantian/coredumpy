@@ -8,3 +8,6 @@ twine
 flake8
 mypy
 coverage
+
+# Test
+pytest

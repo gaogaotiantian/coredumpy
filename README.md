@@ -17,12 +17,20 @@ coredumpy saves your crash site so you can better debug your python program.
 
 In most cases, you only need to hook `coredumpy` to some triggers
 
+For `Exception` and `unittest`, patch with a simple line
+
 ```python
 import coredumpy
 # Create a dump in "./dumps" when there's an unhandled exception
 coredumpy.patch_except(directory='./dumps')
 # Create a dump in "./dumps" when there's a unittest failure/error
 coredumpy.patch_unittest(directory='./dumps')
+```
+
+For `pytest`, you can use `coredumpy` as a plugin
+
+```
+pytest --enable-coredumpy --coredumpy-dir ./dumps
 ```
 
 Or you can dump the current frame stack manually

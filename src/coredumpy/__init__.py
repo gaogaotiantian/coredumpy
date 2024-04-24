@@ -4,6 +4,7 @@
 
 __version__ = "0.0.1"
 
+import coredumpy.pytest_hook as pytest_hook
 from .coredumpy import Coredumpy, dump, load
 from .except_hook import patch_except
 from .main import main
@@ -19,4 +20,5 @@ __all__ = [
     "main",
     "patch_except",
     "patch_unittest",
+    "pytest_hook",
 ]

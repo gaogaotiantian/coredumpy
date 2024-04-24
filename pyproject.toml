@@ -32,5 +32,8 @@ Homepage = "https://github.com/gaogaotiantian/coredumpy"
 [project.scripts]
 coredumpy = "coredumpy:main"
 
+[project.entry-points.pytest11]
+coredumpy = "coredumpy:pytest_hook"
+
 [tool.setuptools.dynamic]
 version = {attr = "coredumpy.__version__"}
