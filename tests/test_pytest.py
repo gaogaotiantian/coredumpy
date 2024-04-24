@@ -13,8 +13,6 @@ class TestPytest(TestBase):
     def test_pytest(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             test = textwrap.dedent("""
-                import pytest
-                import os
                 def test_for_pytest_equal():
                     assert 1 == 2
 
@@ -29,9 +27,13 @@ class TestPytest(TestBase):
 
             script = f"""
                 import pytest
-                pytest.main(["--enable-coredumpy", "--coredumpy-dir", {repr(dump_path)}, {repr(test_path)}])
+                import os
+                rootdir = os.path.dirname(__file__)
+                pytest.main(["--enable-coredumpy", "--coredumpy-dir", {repr(dump_path)}, "--rootdir", rootdir, {repr(test_path)}])
             """
             stdout, stderr = self.run_script(script)
+            print(dump_path, test_path)
+            print(stderr, stdout)
             self.assertEqual(len(os.listdir(dump_path)), 2,
                              f"The dump directory has {os.listdir(dump_path)}\n{stdout}\n{stderr}")
 
