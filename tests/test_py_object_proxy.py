@@ -29,7 +29,7 @@ class TestPyObjectProxy(TestBase):
         proxy = self.convert_object(obj)
         self.assertEqual(proxy.x, 142857)
         self.assertEqual(dir(proxy), ['x'])
-        self.assertIn('<A object at 0x', repr(proxy))
+        self.assertIn('A object at 0x', repr(proxy))
 
     def test_tuple(self):
         obj = (1, 2, 3)
