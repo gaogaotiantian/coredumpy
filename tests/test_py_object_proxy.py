@@ -53,9 +53,13 @@ class TestPyObjectProxy(TestBase):
 
     def test_recursion(self):
         class A:
+            _reference = []
+
             @property
             def parent(self):
-                return A()
+                obj = A()
+                self._reference.append(obj)
+                return obj
 
         obj = A()
         proxy = self.convert_object(obj)
