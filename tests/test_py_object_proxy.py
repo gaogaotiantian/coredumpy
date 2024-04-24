@@ -54,6 +54,7 @@ class TestPyObjectProxy(TestBase):
     def test_recursion(self):
         class A:
             _reference = []
+
             @property
             def parent(self):
                 obj = A()
