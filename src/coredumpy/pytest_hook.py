@@ -20,7 +20,7 @@ def pytest_exception_interact(node, call, report):
     if not node.config.getoption("--enable-coredumpy"):
         return
 
-    import pytest
+    import pytest  # type: ignore
     if isinstance(report, pytest.TestReport):
         try:
             tb = call.excinfo.tb
