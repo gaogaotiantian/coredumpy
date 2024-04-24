@@ -3,8 +3,17 @@
 
 
 import inspect
+import queue
 import types
 from typing import Callable
+
+
+class _Unknown:
+    def __repr__(self):
+        return "<Unknown Object>"
+
+
+_unknown = _Unknown()
 
 
 class PyObjectProxy:
@@ -12,6 +21,9 @@ class PyObjectProxy:
     _proxies: dict[str, object] = {}
     _encoders: dict[str, Callable] = {}
     _decoders: dict[str, Callable] = {}
+    _pending_objects: queue.Queue = queue.Queue()
+    _current_recursion_depth = 0
+    _max_recursion_depth = 100
 
     def __init__(self):
         self._coredumpy_attrs = {}
@@ -24,10 +36,24 @@ class PyObjectProxy:
     @classmethod
     def add_object(cls, obj):
         if str(id(obj)) not in cls._objects:
-            # label the id
-            cls._objects[str(id(obj))] = {}
-            cls._objects[str(id(obj))] = cls.dump_object(obj)
+            cls._current_recursion_depth = 0
+            cls._add_object(obj)
+            while not cls._pending_objects.empty():
+                depth, o = cls._pending_objects.get()
+                cls._current_recursion_depth = depth
+                cls._objects[str(id(o))] = cls.dump_object(o)
+            cls._current_recursion_depth = 0
+            cls._pending_objects = queue.Queue()
         return cls._objects[str(id(obj))]
+
+    @classmethod
+    def _add_object(cls, obj):
+        if cls._current_recursion_depth > cls._max_recursion_depth:
+            return
+        id_str = str(id(obj))
+        if id_str not in cls._objects:
+            cls._objects[id_str] = {"type": "_coredumpy_unknown"}
+            cls._pending_objects.put((cls._current_recursion_depth + 1, obj))
 
     @classmethod
     def dump_object(cls, obj):
@@ -37,12 +63,12 @@ class PyObjectProxy:
             return {"type": type(obj).__name__, "value": obj}
         elif isinstance(obj, (list, tuple, set)):
             for item in obj:
-                cls.add_object(item)
+                cls._add_object(item)
             return {"type": type(obj).__name__, "value": [str(id(item)) for item in obj]}
         elif isinstance(obj, dict):
             for key, value in obj.items():
-                cls.add_object(key)
-                cls.add_object(value)
+                cls._add_object(key)
+                cls._add_object(value)
             return {"type": type(obj).__name__, "value": {str(id(key)): str(id(value)) for key, value in obj.items()}}
         elif type(obj) in cls._encoders:
             return cls._encoders[type(obj)](obj)
@@ -53,20 +79,20 @@ class PyObjectProxy:
         if id in cls._proxies:
             return cls._proxies[id]
         if data is None:
-            raise ValueError("Object not found")
-        if data["type"] == "None":
+            proxy = _unknown
+        elif data["type"] == "None":
             proxy = None
         elif data["type"] in ("int", "float", "str", "bool"):
             proxy = data["value"]
         elif data["type"] == "list":
-            proxy = [cls.load_object(item_id, cls._objects[item_id]) for item_id in data["value"]]
+            proxy = [cls.load_object(item_id, cls._objects.get(item_id)) for item_id in data["value"]]
         elif data["type"] == "tuple":
-            proxy = tuple(cls.load_object(item_id, cls._objects[item_id]) for item_id in data["value"])
+            proxy = tuple(cls.load_object(item_id, cls._objects.get(item_id)) for item_id in data["value"])
         elif data["type"] == "set":
-            proxy = set(cls.load_object(item_id, cls._objects[item_id]) for item_id in data["value"])
+            proxy = set(cls.load_object(item_id, cls._objects.get(item_id)) for item_id in data["value"])
         elif data["type"] == "dict":
-            proxy = {cls.load_object(key_id, cls._objects[key_id]):
-                     cls.load_object(value_id, cls._objects[value_id])
+            proxy = {cls.load_object(key_id, cls._objects.get(key_id)):
+                     cls.load_object(value_id, cls._objects.get(value_id))
                      for key_id, value_id in data["value"].items()}
         elif data["type"] in cls._decoders:
             proxy = cls._decoders[data["type"]](id, data)
@@ -99,7 +125,7 @@ class PyObjectProxy:
             return data
         for attr, value in inspect.getmembers(obj):
             if not attr.startswith("__") and not callable(value):
-                cls.add_object(value)
+                cls._add_object(value)
                 data["attrs"][attr] = str(id(value))
         return data
 

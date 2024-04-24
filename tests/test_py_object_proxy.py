@@ -5,7 +5,7 @@
 import importlib
 import sys
 
-from coredumpy.py_object_proxy import PyObjectProxy
+from coredumpy.py_object_proxy import PyObjectProxy, _unknown
 
 from .base import TestBase
 
@@ -79,5 +79,4 @@ class TestPyObjectProxy(TestBase):
             proxy.y
 
     def test_invalid(self):
-        with self.assertRaises(ValueError):
-            PyObjectProxy.load_object("1", None)
+        self.assertEqual(PyObjectProxy.load_object("1", None), _unknown)
