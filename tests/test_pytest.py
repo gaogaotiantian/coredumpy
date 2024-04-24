@@ -31,8 +31,8 @@ class TestPytest(TestBase):
                 import pytest
                 pytest.main(["--enable-coredumpy", "--coredumpy-dir", {repr(dump_path)}, {repr(test_path)}])
             """
-            self.run_script(script)
-            self.assertEqual(len(os.listdir(dump_path)), 2, f"The dump directory has {os.listdir(dump_path)}")
+            stdout, stderr = self.run_script(script)
+            self.assertEqual(len(os.listdir(dump_path)), 2, f"The dump directory has {os.listdir(dump_path)}\n{stdout}\n{stderr}")
 
             # Without the enable, it should not produce dumps
             script = f"""
