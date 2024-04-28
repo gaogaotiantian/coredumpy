@@ -66,6 +66,16 @@ open an unknown dump (not recommended though). You will be in an "observer"
 mode where you can access certain types of value of the variables and attributes,
 but none of the user-created objects will have the actual functionality.
 
+### peek
+
+If you only need some very basic information of the dump (to figure out which dump
+you actually need), you can use `peek` command.
+
+```
+coredumpy peek <your_dump_directory>
+coredumpy peek <your_dump_file1> <your_dump_file2>
+```
+
 ## Disclaimer
 
 This library is still in development phase and is not recommended for production use.
