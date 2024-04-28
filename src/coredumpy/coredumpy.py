@@ -2,6 +2,7 @@
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
 
+import gzip
 import inspect
 import json
 import linecache
@@ -64,7 +65,7 @@ class Coredumpy:
                     file_lines[filename] = f.readlines()
 
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        with open(output_file, "w") as f:
+        with gzip.open(output_file, "wt") as f:
             json.dump({
                 "objects": PyObjectProxy._objects,
                 "frame": str(id(curr_frame)),
@@ -77,7 +78,7 @@ class Coredumpy:
 
     @classmethod
     def load(cls, path):
-        with open(path, "r") as f:
+        with gzip.open(path, "rt") as f:
             data = json.load(f)
         patch_all()
         for filename, lines in data["files"].items():
