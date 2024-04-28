@@ -2,12 +2,14 @@
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
 
+import datetime
 import gzip
 import inspect
 import json
 import linecache
 import os
 import pdb
+import platform
 import tokenize
 import types
 import warnings
@@ -65,11 +67,13 @@ class Coredumpy:
                     file_lines[filename] = f.readlines()
 
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
         with gzip.open(output_file, "wt") as f:
             json.dump({
                 "objects": PyObjectProxy._objects,
                 "frame": str(id(curr_frame)),
                 "files": file_lines,
+                "metadata": cls.get_metadata()
             }, f)
 
         PyObjectProxy.clear()
@@ -80,6 +84,11 @@ class Coredumpy:
     def load(cls, path):
         with gzip.open(path, "rt") as f:
             data = json.load(f)
+
+        from coredumpy import __version__
+        if data["metadata"]["version"] != __version__:  # pragma: no cover
+            print(f"Warning! the dump file is created by {data['metadata']['version']}\n"
+                  f"but the current coredumpy version is {__version__}")
         patch_all()
         for filename, lines in data["files"].items():
             linecache.cache[filename] = (len(lines), None, lines, filename)
@@ -90,6 +99,21 @@ class Coredumpy:
         pdb_instance.reset()
         pdb_instance.interaction(frame, None)
         PyObjectProxy.clear()  # pragma: no cover
+
+    @classmethod
+    def get_metadata(cls):
+        from coredumpy import __version__
+        uname = platform.uname()
+        return {
+            "version": __version__,
+            "python_version": platform.python_version(),
+            "dump_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "system": {
+                "system": uname.system,
+                "node": uname.node,
+                "release": uname.release,
+            }
+        }
 
 
 dump = Coredumpy.dump
