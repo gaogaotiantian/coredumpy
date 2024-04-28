@@ -2,7 +2,7 @@
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
 
-__version__ = "0.0.2"
+__version__ = "0.0.1"
 
 import coredumpy.pytest_hook as pytest_hook
 from .coredumpy import Coredumpy, dump, load

@@ -86,7 +86,7 @@ class Coredumpy:
             data = json.load(f)
 
         from coredumpy import __version__
-        if data["metadata"]["version"] != __version__:
+        if data["metadata"]["version"] != __version__:  # pragma: no cover
             print(f"Warning! the dump file is created by {data['metadata']['version']}\n"
                   f"but the current coredumpy version is {__version__}")
         patch_all()
