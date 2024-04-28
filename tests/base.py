@@ -46,3 +46,11 @@ class TestBase(unittest.TestCase):
             self.assertEqual(process.returncode, expected_returncode,
                              f"script failed with return code {process.returncode}\n{stderr}")
         return stdout, stderr
+
+    def run_peek(self, paths):
+        process = subprocess.Popen(normalize_commands(["coredumpy", "peek"] + paths),
+                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        stdout = stdout.decode(errors='backslashreplace')
+        stderr = stderr.decode(errors='backslashreplace')
+        return stdout, stderr
