@@ -7,7 +7,7 @@ coredumpy saves your crash site for post-mortem debugging.
 ## Highlights
 
 * Easy to use
-* Native support for unittest, pytest and exceptions
+* Native support for unittest, pytest and run-time exceptions
 * Portable and safe dump
 * Utilizes pdb interface
 
@@ -30,10 +30,15 @@ coredumpy.patch_unittest(directory='./dumps')
 For `pytest`, you can use `coredumpy` as a plugin
 
 ```
+# Create a dump in "./dumps" when there's a pytest failure/error
 pytest --enable-coredumpy --coredumpy-dir ./dumps
 ```
 
+<details>
+
+<summary>
 Or you can dump the current frame stack manually
+</summary>
 
 ```python
 import coredumpy
@@ -52,6 +57,8 @@ coredumpy.dump(directory='./dumps')
 coredumpy.dump(description="a random dump")
 ```
 
+</details>
+
 ### load
 
 Load your dump with
@@ -62,11 +69,6 @@ coredumpy load <your_dump_file>
 
 A [pdb](https://docs.python.org/3/library/pdb.html) debugger will be brought up
 and of course not everything is supported.
-
-Objects are not "recreated" in the load process, which makes it safe to even
-open an unknown dump (not recommended though). You will be in an "observer"
-mode where you can access certain types of value of the variables and attributes,
-but none of the user-created objects will have the actual functionality.
 
 ### peek
 
