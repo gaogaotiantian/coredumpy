@@ -16,6 +16,12 @@ def pytest_addoption(parser):
     )
 
 
+def _get_description(report):
+    underscore_count = (70 - len(report.head_line) - 2) // 2
+    headline = f"{'_' * underscore_count} {report.head_line} {'_' * underscore_count}"
+    return '\n'.join([headline, report.longreprtext])
+
+
 def pytest_exception_interact(node, call, report):
     if not node.config.getoption("--enable-coredumpy"):
         return
@@ -26,7 +32,9 @@ def pytest_exception_interact(node, call, report):
             tb = call.excinfo.tb
             while tb.tb_next:
                 tb = tb.tb_next
-            filename = coredumpy.dump(tb.tb_frame, directory=node.config.getoption("--coredumpy-dir"))
+            filename = coredumpy.dump(tb.tb_frame,
+                                      description=_get_description(report),
+                                      directory=node.config.getoption("--coredumpy-dir"))
             print(f'Your frame stack is dumped, open it with\n'
                   f'coredumpy load {filename}')
         except Exception:  # pragma: no cover

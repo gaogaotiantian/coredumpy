@@ -11,6 +11,7 @@ import os
 import pdb
 import platform
 import tokenize
+import textwrap
 import types
 import warnings
 from typing import Callable, Optional, Union
@@ -25,6 +26,7 @@ class Coredumpy:
     def dump(cls,
              frame: Optional[types.FrameType] = None,
              *,
+             description: Optional[str] = None,
              path: Optional[Union[str, Callable[[], str]]] = None,
              directory: Optional[str] = None):
         """
@@ -73,6 +75,7 @@ class Coredumpy:
                 "objects": PyObjectProxy._objects,
                 "frame": str(id(curr_frame)),
                 "files": file_lines,
+                "description": description,
                 "metadata": cls.get_metadata()
             }, f)
 
@@ -101,6 +104,24 @@ class Coredumpy:
         PyObjectProxy.clear()  # pragma: no cover
 
     @classmethod
+    def peek(cls, path):
+        with gzip.open(path, "rt") as f:
+            data = json.load(f)
+
+        from coredumpy import __version__
+        if data["metadata"]["version"] != __version__:  # pragma: no cover
+            print(f"Warning! the dump file is created by {data['metadata']['version']}\n"
+                  f"but the current coredumpy version is {__version__}")
+        patch_all()
+        metadata = data["metadata"]
+        system = metadata["system"]
+        print(f"{os.path.abspath(path)}")
+        print(f"    Python v{metadata['python_version']} on {system['system']} {system['node']} {system['release']}")
+        print(f"    {metadata['dump_time']}")
+        if data["description"]:
+            print(textwrap.indent(data["description"], "    "))
+
+    @classmethod
     def get_metadata(cls):
         from coredumpy import __version__
         uname = platform.uname()
@@ -118,3 +139,4 @@ class Coredumpy:
 
 dump = Coredumpy.dump
 load = Coredumpy.load
+peek = Coredumpy.peek

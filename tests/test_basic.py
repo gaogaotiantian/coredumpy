@@ -67,6 +67,26 @@ class TestBasic(TestBase):
         self.assertIn("return 1 / arg", stdout)
         self.assertIn("0", stdout)
 
+    def test_peek(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            script = f"""
+                import coredumpy
+                coredumpy.dump(description="test", directory={repr(tmpdir)})
+            """
+            self.run_script(script)
+            self.run_script(script)
+            with open(os.path.join(tmpdir, "invalid"), "w") as f:
+                f.write("{invalid}")
+
+            self.assertEqual(len(os.listdir(tmpdir)), 3)
+            stdout, _ = self.run_peek([tmpdir])
+            stdout2, _ = self.run_peek([os.path.join(tmpdir, file) for file in os.listdir(tmpdir)])
+
+            self.assertEqual(stdout, stdout2)
+
+            stdout, _ = self.run_peek([os.path.join(tmpdir, "nosuchfile")])
+            self.assertIn("not found", stdout)
+
     def test_nonexist_file(self):
         stdout, stderr = self.run_test("", "nonexist_dump", [])
         self.assertIn("File nonexist_dump not found", stdout)
