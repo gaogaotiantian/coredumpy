@@ -19,6 +19,13 @@ def patch_unittest(path: Optional[Union[str, Callable[[], str]]] = None,
             The directory to save the dump file, only works when path is not specified.
     """
 
+    def _get_description(self, test, err):
+        class_name = f"{test.__class__.__module__}.{test.__class__.__qualname__}"
+        return '\n'.join(['=' * 70,
+                          f"FAIL: {test._testMethodName} ({class_name})",
+                          '-' * 70,
+                          self._exc_info_to_string(err, test).strip()])
+
     _original_addError = unittest.TestResult.addError
     _original_addFailure = unittest.TestResult.addFailure
 
@@ -27,7 +34,8 @@ def patch_unittest(path: Optional[Union[str, Callable[[], str]]] = None,
         while tb.tb_next:
             tb = tb.tb_next
         try:
-            filename = dump(tb.tb_frame, path=path, directory=directory)
+            filename = dump(tb.tb_frame, description=_get_description(self, test, err),
+                            path=path, directory=directory)
             print(f'Your frame stack is dumped, open it with\n'
                   f'coredumpy load {filename}')
         except Exception:  # pragma: no cover
@@ -39,7 +47,8 @@ def patch_unittest(path: Optional[Union[str, Callable[[], str]]] = None,
         while tb.tb_next:
             tb = tb.tb_next
         try:
-            filename = dump(tb.tb_frame, path=path, directory=directory)
+            filename = dump(tb.tb_frame, description=_get_description(self, test, err),
+                            path=path, directory=directory)
             print(f'Your frame stack is dumped, open it with\n'
                   f'coredumpy load {filename}')
         except Exception:  # pragma: no cover

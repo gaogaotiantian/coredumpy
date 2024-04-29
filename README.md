@@ -48,6 +48,8 @@ coredumpy.dump(path='coredumpy.dump')
 coredumpy.dump(path=lambda: f"coredumpy_{time.time()}.dump")
 # Specify a directory to keep the dump
 coredumpy.dump(directory='./dumps')
+# Specify the description of the dump for peek
+coredumpy.dump(description="a random dump")
 ```
 
 ### load

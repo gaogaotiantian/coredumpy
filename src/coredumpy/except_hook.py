@@ -3,6 +3,7 @@
 
 
 import sys
+import traceback
 from typing import Callable, Optional, Union
 
 from .coredumpy import dump
@@ -22,12 +23,19 @@ def patch_except(path: Optional[Union[str, Callable[[], str]]] = None,
             The directory to save the dump file, only works when path is not specified.
     """
 
-    def _excepthook(type, value, traceback):
-        while traceback.tb_next:
-            traceback = traceback.tb_next
+    def _get_description(type, value, tb):
+        side_count = (70 - len(type.__qualname__) - 2) // 2
+        headline = f"{'=' * side_count} {type.__qualname__} {'=' * side_count}"
+        return '\n'.join([headline,
+                          ''.join(traceback.format_exception(type, value, tb)).strip()])
 
-        filename = dump(traceback.tb_frame, path=path, directory=directory)
-        _original_excepthook(type, value, traceback)
+    def _excepthook(type, value, tb):
+        while tb.tb_next:
+            tb = tb.tb_next
+
+        filename = dump(tb.tb_frame, description=_get_description(type, value, tb),
+                        path=path, directory=directory)
+        _original_excepthook(type, value, tb)
         print(f'Your frame stack is dumped, open it with\n'
               f'coredumpy load {filename}')
 
