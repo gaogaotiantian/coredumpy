@@ -2,14 +2,14 @@
 
 [![build](https://github.com/gaogaotiantian/coredumpy/actions/workflows/build_test.yaml/badge.svg)](https://github.com/gaogaotiantian/coredumpy/actions/workflows/build_test.yaml)  [![coverage](https://img.shields.io/codecov/c/github/gaogaotiantian/coredumpy)](https://codecov.io/gh/gaogaotiantian/coredumpy)  [![pypi](https://img.shields.io/pypi/v/coredumpy.svg)](https://pypi.org/project/coredumpy/)  [![support-version](https://img.shields.io/pypi/pyversions/coredumpy)](https://img.shields.io/pypi/pyversions/coredumpy)  [![sponsor](https://img.shields.io/badge/%E2%9D%A4-Sponsor%20me-%23c96198?style=flat&logo=GitHub)](https://github.com/sponsors/gaogaotiantian)
 
-coredumpy saves your crash site so you can better debug your python program.
+coredumpy saves your crash site for post-mortem debugging.
 
 ## Highlights
 
 * Easy to use
-* Supports pdb interface
-* Does not rely on pickle
-* Open the dump file on any machine
+* Native support for unittest, pytest and exceptions
+* Portable and safe dump
+* Utilizes pdb interface
 
 ## Usage
 
@@ -78,11 +78,19 @@ coredumpy peek <your_dump_directory>
 coredumpy peek <your_dump_file1> <your_dump_file2>
 ```
 
-## Disclaimer
+## About the data
 
-This library is still in development phase and is not recommended for production use.
+Besides a couple of builtin types, coredumpy treats almost every object as an
+Python object with attributes, and that's what it records in the dump.
 
-The APIs could change during development phase.
+It does not use `pickle` so you don't need to have the same run-time environment
+when you load the dump. It's also safer to open an arbitrary dump without the
+unsafe pickling process.
+
+That being said, most of the objects will not be "restored" as they were when
+being dumped. You are in an observer mode where you can inspect attributes of
+all objects. None of the methods of the objects would work, nor would any
+dymanic features.
 
 ## License
 

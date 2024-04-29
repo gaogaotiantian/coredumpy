@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "coredumpy"
 authors = [{name = "Tian Gao", email = "gaogaotiantian@hotmail.com"}]
-description = "A utility tool to dump python stacks"
+description = "coredumpy saves your crash site for post-mortem debugging"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {file = "LICENSE"}
