@@ -71,7 +71,7 @@ class TestBasic(TestBase):
         with tempfile.TemporaryDirectory() as tmpdir:
             script = f"""
                 import coredumpy
-                coredumpy.dump(directory={repr(tmpdir)})
+                coredumpy.dump(description="test", directory={repr(tmpdir)})
             """
             self.run_script(script)
             self.run_script(script)
