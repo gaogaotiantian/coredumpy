@@ -25,7 +25,7 @@ from .utils import get_dump_filename
 
 class _ExecutableTarget:
     filename: str
-    code: CodeType | str
+    code: Union[CodeType, str]
     namespace: dict
 
 
