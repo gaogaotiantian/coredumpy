@@ -67,6 +67,40 @@ class TestBasic(TestBase):
         self.assertIn("return 1 / arg", stdout)
         self.assertIn("0", stdout)
 
+    def test_cli(self):
+        script = """
+            def g(arg):
+                return 1 / arg
+            def f(x):
+                a = 142857
+                g(x)
+            f(0)
+        """
+        stdout, _ = self.run_test(script, "coredumpy_dump", [
+            "w",
+            "p arg",
+            "u",
+            "p a",
+            "q"
+        ], use_cli_run=True)
+
+        self.assertIn("-> f(0)", stdout)
+        self.assertIn("-> g(x)", stdout)
+        self.assertIn("142857", stdout)
+
+    def test_cli_invalid(self):
+        stdout, _ = self.run_run([])
+        self.assertIn("Error", stdout)
+
+        stdout, _ = self.run_run(["notexist.py"])
+        self.assertIn("Error", stdout)
+
+        stdout, _ = self.run_run([os.path.dirname(__file__)])
+        self.assertIn("Error", stdout)
+
+        stdout, _ = self.run_run(["-m", "nonexistmodule"])
+        self.assertIn("Error", stdout)
+
     def test_peek(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             script = f"""

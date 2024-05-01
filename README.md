@@ -15,9 +15,24 @@ coredumpy saves your crash site for post-mortem debugging.
 
 ### dump
 
-In most cases, you only need to hook `coredumpy` to some triggers
+For `pytest`, you can use `coredumpy` as a plugin
 
-For `Exception` and `unittest`, patch with a simple line
+```
+# Create a dump in "./dumps" when there's a pytest failure/error
+pytest --enable-coredumpy --coredumpy-dir ./dumps
+```
+
+For `Exception` and `unittest`, you can use `coredumpy run` command.
+A dump will be generated when there's an unhandled exception or a test failure
+
+```
+# with no argument coredumpy run will generate the dump in the current dir
+coredumpy run my_script.py
+coredumpy run my_script.py --directory ./dumps
+coredumpy run -m unittest --directory ./dumps
+```
+
+Or you can patch explicitly in your code and execute the script/module as usual
 
 ```python
 import coredumpy
@@ -25,13 +40,6 @@ import coredumpy
 coredumpy.patch_except(directory='./dumps')
 # Create a dump in "./dumps" when there's a unittest failure/error
 coredumpy.patch_unittest(directory='./dumps')
-```
-
-For `pytest`, you can use `coredumpy` as a plugin
-
-```
-# Create a dump in "./dumps" when there's a pytest failure/error
-pytest --enable-coredumpy --coredumpy-dir ./dumps
 ```
 
 <details>

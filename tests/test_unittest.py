@@ -5,7 +5,6 @@
 import os
 import tempfile
 
-
 from .base import TestBase
 
 
@@ -28,6 +27,17 @@ class TestUnittest(TestBase):
                 unittest.main()
             """
             stdout, stderr = self.run_script(script, expected_returncode=1)
+            self.assertIn("FAIL: test_bool", stderr)
+            self.assertIn("FAIL: test_eq", stderr)
+            self.assertIn("ERROR: test_error", stderr)
+            self.assertNotIn("test_pass", stderr)
+            self.assertEqual(stdout.count(tempdir), 3)
+            self.assertEqual(len(os.listdir(tempdir)), 3)
+
+    def test_unittest_with_cli(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            stdout, stderr = self.run_run(["-m", "unittest", "tests.data.failed",
+                                           "--directory", tempdir])
             self.assertIn("FAIL: test_bool", stderr)
             self.assertIn("FAIL: test_eq", stderr)
             self.assertIn("ERROR: test_error", stderr)

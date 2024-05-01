@@ -13,13 +13,17 @@ from .util import normalize_commands
 
 
 class TestBase(unittest.TestCase):
-    def run_test(self, script, dumppath, commands):
+    def run_test(self, script, dumppath, commands, use_cli_run=False):
         script = textwrap.dedent(script)
         with tempfile.TemporaryDirectory() as tmpdir:
             with open(f"{tmpdir}/script.py", "w") as f:
                 f.write(script)
-            subprocess.run(normalize_commands([sys.executable, f"{tmpdir}/script.py"]),
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if use_cli_run:
+                subprocess.run(normalize_commands(["coredumpy", "run", f"{tmpdir}/script.py", "--path", dumppath]),
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                subprocess.run(normalize_commands([sys.executable, f"{tmpdir}/script.py"]),
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
             process = subprocess.Popen(normalize_commands(["coredumpy", "load", dumppath]),
                                        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -45,6 +49,14 @@ class TestBase(unittest.TestCase):
             stderr = stderr.decode(errors='backslashreplace')
             self.assertEqual(process.returncode, expected_returncode,
                              f"script failed with return code {process.returncode}\n{stderr}")
+        return stdout, stderr
+
+    def run_run(self, args):
+        process = subprocess.Popen(normalize_commands(["coredumpy", "run"] + args),
+                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        stdout = stdout.decode(errors='backslashreplace')
+        stderr = stderr.decode(errors='backslashreplace')
         return stdout, stderr
 
     def run_peek(self, paths):
