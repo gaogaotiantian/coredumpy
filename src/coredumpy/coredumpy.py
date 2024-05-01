@@ -42,7 +42,7 @@ class _ScriptTarget(_ExecutableTarget):
 
         # If safe_path(-P) is not set, sys.path[0] is the directory
         # of pdb, and we should replace it with the directory of the script
-        if not sys.flags.safe_path:
+        if not getattr(sys.flags, "safe_path", None):
             sys.path[0] = os.path.dirname(self._target)
 
     def __repr__(self):
