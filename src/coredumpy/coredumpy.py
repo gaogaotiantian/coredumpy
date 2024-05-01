@@ -72,8 +72,8 @@ class _ModuleTarget(_ExecutableTarget):
 
         import runpy
         try:
-            _, self._spec, self._code = runpy._get_module_details(self._target)
             sys.path.insert(0, os.getcwd())
+            _, self._spec, self._code = runpy._get_module_details(self._target)
         except ImportError as e:
             print(f"ImportError: {e}")
             sys.exit(1)
@@ -134,6 +134,7 @@ class Coredumpy:
             PyObjectProxy.add_object(frame)
 
         output_file = get_dump_filename(frame, path, directory)
+        frame_id = str(id(frame))
 
         while frame:
             filename = frame.f_code.co_filename
@@ -153,7 +154,7 @@ class Coredumpy:
         with gzip.open(output_file, "wt") as f:
             json.dump({
                 "objects": PyObjectProxy._objects,
-                "frame": str(id(curr_frame)),
+                "frame": frame_id,
                 "files": file_lines,
                 "description": description,
                 "metadata": cls.get_metadata()
