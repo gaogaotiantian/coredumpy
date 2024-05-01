@@ -53,6 +53,9 @@ class PyObjectProxy:
         id_str = str(id(obj))
         if id_str not in cls._objects:
             cls._objects[id_str] = {"type": "_coredumpy_unknown"}
+            if obj is cls._objects or obj is cls._pending_objects:
+                # Avoid changing the dict while dumping
+                return
             cls._pending_objects.put((cls._current_recursion_depth + 1, obj))
 
     @classmethod

@@ -5,18 +5,24 @@
 import argparse
 import os
 
-from .coredumpy import load, peek
+from .coredumpy import load, peek, run
 
 
 def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command")
 
+    subparsers_run = subparsers.add_parser("run", help="Run a file/module with coredumpy enabled.")
+    subparsers_run.add_argument("-m", metavar="module", dest="module")
+    subparsers_run.add_argument("--path", help="The path of dump file", default=None)
+    subparsers_run.add_argument("--directory", help="The directory of dump file", default=None)
+    subparsers_run.add_argument("args", nargs="*")
+
     subparsers_load = subparsers.add_parser("load", help="Load a dump file.")
     subparsers_load.add_argument("file", type=str, help="The dump file to load.")
 
-    subparsers_load = subparsers.add_parser("peek", help="Peek a dump file.")
-    subparsers_load.add_argument("files", help="The dump file to load.", nargs="+")
+    subparsers_peek = subparsers.add_parser("peek", help="Peek a dump file.")
+    subparsers_peek.add_argument("files", help="The dump file to load.", nargs="+")
 
     args = parser.parse_args()
 
@@ -42,3 +48,5 @@ def main():
                         pass
             else:
                 print(f"File {file} not found.")
+    elif args.command == "run":
+        run(args)
