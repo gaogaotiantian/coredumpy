@@ -89,6 +89,9 @@ class TestBasic(TestBase):
         self.assertIn("142857", stdout)
 
     def test_cli_invalid(self):
+        stdout, _ = self.run_run([])
+        self.assertIn("Error", stdout)
+
         stdout, _ = self.run_run(["notexist.py"])
         self.assertIn("Error", stdout)
 

@@ -45,9 +45,6 @@ class _ScriptTarget(_ExecutableTarget):
         if not getattr(sys.flags, "safe_path", None):
             sys.path[0] = os.path.dirname(self._target)
 
-    def __repr__(self):
-        return self._target
-
     @property
     def filename(self):
         return self._target
@@ -80,13 +77,10 @@ class _ModuleTarget(_ExecutableTarget):
         except ImportError as e:
             print(f"ImportError: {e}")
             sys.exit(1)
-        except Exception:
+        except Exception:  # pragma: no cover
             import traceback
             traceback.print_exc()
             sys.exit(1)
-
-    def __repr__(self):
-        return self._target
 
     @property
     def filename(self):

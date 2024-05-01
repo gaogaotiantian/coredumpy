@@ -6,6 +6,7 @@ import os
 import tempfile
 import textwrap
 
+import unittest
 
 from .base import TestBase
 
@@ -38,31 +39,11 @@ class TestUnittest(TestBase):
 
     def test_unittest_with_cli(self):
         with tempfile.TemporaryDirectory() as tempdir:
-            script = textwrap.dedent("""
-                import unittest
-                class TestUnittest(unittest.TestCase):
-                    def test_bool(self):
-                        self.assertTrue(False)
-                    def test_eq(self):
-                        self.assertEqual(1, 2)
-                    def test_pass(self):
-                        self.assertEqual(1, 1)
-                    def test_error(self):
-                        raise ValueError()
-            """)
-            with open(f"{tempdir}/script.py", "w") as f:
-                f.write(script)
-
-            try:
-                curdir = os.getcwd()
-                os.chdir(tempdir)
-                stdout, stderr = self.run_run(["-m", "unittest", "script",
-                                               "--directory", os.path.join(tempdir, "dump")])
-            finally:
-                os.chdir(curdir)
+            stdout, stderr = self.run_run(["-m", "unittest", "tests.data.failed",
+                                           "--directory", tempdir])
             self.assertIn("FAIL: test_bool", stderr)
             self.assertIn("FAIL: test_eq", stderr)
             self.assertIn("ERROR: test_error", stderr)
             self.assertNotIn("test_pass", stderr)
             self.assertEqual(stdout.count(tempdir), 3)
-            self.assertEqual(len(os.listdir(os.path.join(tempdir, "dump"))), 3)
+            self.assertEqual(len(os.listdir(tempdir)), 3)
