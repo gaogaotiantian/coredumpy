@@ -41,7 +41,7 @@ class _ScriptTarget(_ExecutableTarget):
             sys.exit(1)
 
         # If safe_path(-P) is not set, sys.path[0] is the directory
-        # of pdb, and we should replace it with the directory of the script
+        # of coredumpy, and we should replace it with the directory of the script
         if not getattr(sys.flags, "safe_path", None):
             sys.path[0] = os.path.dirname(self._target)
 
@@ -128,19 +128,18 @@ class Coredumpy:
             inner_frame = inspect.currentframe()
             assert inner_frame is not None
             frame = inner_frame.f_back
-        curr_frame = frame
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             PyObjectProxy.add_object(frame)
+
+        output_file = get_dump_filename(frame, path, directory)
 
         while frame:
             filename = frame.f_code.co_filename
             if filename not in files:
                 files.add(filename)
             frame = frame.f_back
-
-        output_file = get_dump_filename(curr_frame, path, directory)
 
         file_lines = {}
 
