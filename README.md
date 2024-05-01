@@ -26,9 +26,10 @@ For `Exception` and `unittest`, you can use `coredumpy run` command.
 A dump will be generated when there's an unhandled exception or a test failure
 
 ```python
+# with no argument coredumpy run will generate the dump in the current dir
 coredumpy run my_script.py
-coredumpy run my_script.py --directory ./dump
-coredumpy run -m unittest --directory ./dump
+coredumpy run my_script.py --directory ./dumps
+coredumpy run -m unittest --directory ./dumps
 ```
 
 Or you can patch explicitly in your code and execute the script/module as usual
