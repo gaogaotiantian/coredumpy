@@ -4,9 +4,6 @@
 
 import os
 import tempfile
-import textwrap
-
-import unittest
 
 from .base import TestBase
 
