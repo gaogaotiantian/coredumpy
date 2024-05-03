@@ -66,7 +66,7 @@ class PyObjectProxy:
             return {"type": type(obj).__name__, "value": obj}
         elif isinstance(obj, bytes):
             return {"type": type(obj).__name__, "value": obj.hex()}
-        elif isinstance(obj, (list, tuple, set)):
+        elif isinstance(obj, (list, tuple, set, frozenset)):
             for item in obj:
                 cls._add_object(item)
             return {"type": type(obj).__name__, "value": [str(id(item)) for item in obj]}
@@ -97,6 +97,8 @@ class PyObjectProxy:
             proxy = tuple(cls.load_object(item_id, cls._objects.get(item_id)) for item_id in data["value"])
         elif data["type"] == "set":
             proxy = set(cls.load_object(item_id, cls._objects.get(item_id)) for item_id in data["value"])
+        elif data["type"] == "frozenset":
+            proxy = frozenset(cls.load_object(item_id, cls._objects.get(item_id)) for item_id in data["value"])
         elif data["type"] == "dict":
             proxy = {cls.load_object(key_id, cls._objects.get(key_id)):
                      cls.load_object(value_id, cls._objects.get(value_id))

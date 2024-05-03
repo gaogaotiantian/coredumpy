@@ -41,6 +41,11 @@ class TestPyObjectProxy(TestBase):
         proxy = self.convert_object(obj)
         self.assertEqual(proxy, {1, 2, 3})
 
+    def test_frozenset(self):
+        obj = frozenset([1, 2, 3])
+        proxy = self.convert_object(obj)
+        self.assertEqual(proxy, frozenset([1, 2, 3]))
+
     def test_bool(self):
         obj = True
         proxy = self.convert_object(obj)
