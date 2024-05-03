@@ -64,6 +64,8 @@ class PyObjectProxy:
             return {"type": "None"}
         elif isinstance(obj, (int, float, str, bool)):
             return {"type": type(obj).__name__, "value": obj}
+        elif isinstance(obj, bytes):
+            return {"type": type(obj).__name__, "value": obj.hex()}
         elif isinstance(obj, (list, tuple, set)):
             for item in obj:
                 cls._add_object(item)
@@ -87,6 +89,8 @@ class PyObjectProxy:
             proxy = None
         elif data["type"] in ("int", "float", "str", "bool"):
             proxy = data["value"]
+        elif data["type"] == "bytes":
+            proxy = bytes.fromhex(data["value"])
         elif data["type"] == "list":
             proxy = [cls.load_object(item_id, cls._objects.get(item_id)) for item_id in data["value"]]
         elif data["type"] == "tuple":
