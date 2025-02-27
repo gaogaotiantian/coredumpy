@@ -66,6 +66,7 @@ class PyObjectContainer:
                         if dependency:
                             for dep_id in dependency:
                                 unresolved_queue.put(dep_id)
+                            unresolved_queue.put(obj_id)
                         else:
                             not_ready_objects.remove(obj_id)
                     continue

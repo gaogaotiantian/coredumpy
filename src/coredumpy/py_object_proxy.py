@@ -5,6 +5,7 @@
 class PyObjectProxy:
     def __init__(self):
         self._coredumpy_attrs = {}
+        self._coredumpy_container = None
 
     def link_container(self, container):
         self._coredumpy_container = container
@@ -16,6 +17,8 @@ class PyObjectProxy:
             self._coredumpy_attrs[key] = value
 
     def __getattr__(self, item):
+        if self._coredumpy_container is None:
+            raise RuntimeError("Container is not linked")
         if item in self._coredumpy_attrs:
             return self._coredumpy_container._proxies[self._coredumpy_attrs[item]]
         raise AttributeError(f"'{self._coredumpy_type}' object has no attribute '{item}'")

@@ -70,13 +70,10 @@ class TypeSupportManager:
         lazy_supports = []
         for support in cls._lazy_supports:
             encode_type, decode_annotation = support.get_type()
-            if isinstance(encode_type, type):
-                cls._encoders[encode_type] = support
+            if t := encode_type():
+                cls._encoders[t] = support
             else:
-                if t := encode_type():
-                    cls._encoders[t] = support
-                else:
-                    lazy_supports.append(support)
+                lazy_supports.append(support)
         cls._lazy_supports = lazy_supports
 
     @classmethod
@@ -103,7 +100,7 @@ class TypeSupportManager:
         typename = data["type"]
         if typename in cls._decoders:
             return cls._decoders[typename].reload(container, data, objects)
-        raise NotImplementedError(typename)
+        raise NotImplementedError(typename)  # pragma: no cover
 
     @classmethod
     def default_dump(cls, obj):
