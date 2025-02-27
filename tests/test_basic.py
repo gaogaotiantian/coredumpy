@@ -120,12 +120,17 @@ class TestBasic(TestBase):
                 import coredumpy
                 coredumpy.dump(description="test", directory={repr(tmpdir)})
             """
+            script_json = f"""
+                import coredumpy
+                coredumpy.dump(description="test", path={repr(os.path.join(tmpdir, "dump.json"))})
+            """
             self.run_script(script)
             self.run_script(script)
+            self.run_script(script_json)
             with open(os.path.join(tmpdir, "invalid"), "w") as f:
                 f.write("{invalid}")
 
-            self.assertEqual(len(os.listdir(tmpdir)), 3)
+            self.assertEqual(len(os.listdir(tmpdir)), 4)
             stdout, _ = self.run_peek([tmpdir])
             stdout2, _ = self.run_peek([os.path.join(tmpdir, file) for file in os.listdir(tmpdir)])
 
