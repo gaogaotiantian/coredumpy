@@ -70,8 +70,9 @@ class PyObjectProxy:
         return data
 
     @classmethod
-    def load_objects(cls, data):
-        cls._objects = data
+    def load_objects(cls, objects):
+        TypeSupportManager.load_lazy_supports()
+        cls._objects = objects.copy()
         unresolved_queue = queue.Queue()
         not_ready_objects = set()
         for key in cls._objects:

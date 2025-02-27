@@ -55,6 +55,18 @@ class TestPyObjectProxy(TestBase):
         proxy = self.convert_object(obj)
         self.assertEqual(proxy, b"hello")
 
+    def test_cycle(self):
+        s = "str"
+        lst = [s, s]
+        dct = {"key": lst}
+        lst.append(dct)
+        st = {s}
+        t = (st, dct)
+        dct["tuple"] = t
+        proxy = self.convert_object(t)
+        self.assertIs(proxy[0].pop(), proxy[1]["key"][1])
+        self.assertIs(proxy, proxy[1]["tuple"])
+
     def test_builtins(self):
         obj = object()
         proxy = self.convert_object(obj)
@@ -104,6 +116,15 @@ class TestPyObjectProxy(TestBase):
         proxy = PyObjectProxy.get_object(str(id(o)))
         with self.assertRaises(AttributeError):
             proxy.y
+
+    def test_nonexist_object(self):
+        lst = [0]
+        PyObjectProxy.add_object(lst)
+        objects = PyObjectProxy._objects.copy()
+        # Made up a non-exist list element
+        objects[str(id(lst))]["values"] = ["1234567"]
+        PyObjectProxy.load_objects(objects)
+        self.assertIs(PyObjectProxy.get_object(1234567), _unknown)
 
     def test_invalid(self):
         self.assertEqual(repr(_unknown), "<Unknown Object>")
