@@ -102,32 +102,6 @@ class PyObjectProxy:
         return cls._proxies.get(obj_id, _unknown)
 
     @classmethod
-    def default_encode(cls, obj):
-        obj_type = type(obj)
-        if obj_type.__module__ in ("builtins", "__main__"):
-            typename = obj_type.__qualname__
-        else:
-            typename = f"{obj_type.__module__}.{obj_type.__qualname__}"
-
-        data = {"type": typename, "attrs": {}}
-        if isinstance(obj, (types.ModuleType,
-                            types.FunctionType,
-                            types.BuiltinFunctionType,
-                            types.LambdaType,
-                            types.MethodType,
-                            )):
-            return data
-        try:
-            for attr, value in inspect.getmembers(obj):
-                if not attr.startswith("__") and not callable(value):
-                    cls._add_object(value)
-                    data["attrs"][attr] = str(id(value))
-        except Exception:  # pragma: no cover
-            # inspect.getmembers may fail on some objects
-            pass
-        return data
-
-    @classmethod
     def default_decode(cls, id, data):
         obj = cls()
         obj._coredumpy_id = id
@@ -135,11 +109,6 @@ class PyObjectProxy:
         for attr, val in data.get("attrs", {}).items():
             setattr(obj, attr, val)
         return obj
-
-    @classmethod
-    def add_support(cls, type, type_annotation, encoder, decoder):
-        cls._encoders[type] = encoder
-        cls._decoders[type_annotation] = decoder
 
     def __setattr__(self, key, value):
         if key.startswith("_coredumpy_"):

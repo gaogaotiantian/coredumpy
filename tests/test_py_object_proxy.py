@@ -126,7 +126,7 @@ class TestPyObjectProxy(TestBase):
         PyObjectProxy.add_object(lst)
         objects = PyObjectProxy._objects.copy()
         # Made up a non-exist list element
-        objects[str(id(lst))]["values"] = ["1234567"]
+        objects[str(id(lst))]["value"] = ["1234567"]
         PyObjectProxy.load_objects(objects)
         self.assertIs(PyObjectProxy.get_object(1234567), _unknown)
 

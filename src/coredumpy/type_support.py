@@ -59,7 +59,7 @@ class TypeSupportManager:
     _lazy_supports: list = []
 
     @classmethod
-    def add_support(cls, support: TypeSupportBase, append_to_lazy_supports=True):
+    def add_support(cls, support: TypeSupportBase):
         encode_type, decode_annotation = support.get_type()
         if isinstance(encode_type, type):
             cls._encoders[encode_type] = support
