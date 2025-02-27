@@ -38,6 +38,7 @@ class PyObjectProxy:
 
     @classmethod
     def add_object(cls, obj):
+        TypeSupportManager.load_lazy_supports()
         objects = {}
         curr_recursion_depth = 0
         pending_objects = [obj]

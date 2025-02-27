@@ -76,7 +76,7 @@ class TypeSupportManager:
                 cls._encoders[encode_type] = support
             else:
                 if t := encode_type():
-                    cls._encoders[encode_type] = t
+                    cls._encoders[t] = support
                 else:
                     lazy_supports.append(support)
         cls._lazy_supports = lazy_supports
