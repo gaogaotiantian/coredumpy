@@ -5,7 +5,7 @@
 import abc
 import inspect
 import types
-from typing import Callable
+from typing import Callable, Optional, Union
 
 
 class TypeSupportLazyLoad(Exception):
@@ -31,17 +31,17 @@ class TypeSupportBase(metaclass=TypeSupportMeta):
 
     @classmethod
     @abc.abstractmethod
-    def get_type(cls) -> tuple[type | Callable, str]:
+    def get_type(cls) -> tuple[Union[type, Callable], str]:
         ...
 
     @classmethod
     @abc.abstractmethod
-    def dump(cls, obj) -> tuple[dict, list | None]:
+    def dump(cls, obj) -> tuple[dict, Optional[list]]:
         ...
 
     @classmethod
     @abc.abstractmethod
-    def load(cls, data: dict, objects: dict) -> tuple[object, list[str] | None]:
+    def load(cls, data: dict, objects: dict) -> tuple[object, Optional[list[str]]]:
         ...
 
 
@@ -49,7 +49,7 @@ class TypeSupportContainerBase(TypeSupportBase):
 
     @classmethod
     @abc.abstractmethod
-    def reload(cls, container, data, objects: dict) -> tuple[object, list[str] | None]:
+    def reload(cls, container, data, objects: dict) -> tuple[object, Optional[list[str]]]:
         ...
 
 
