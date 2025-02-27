@@ -16,10 +16,9 @@ class TestPyObjectProxy(TestBase):
         return super().tearDown()
 
     def convert_object(self, obj):
-        data = PyObjectProxy.add_object(obj)
-        for i, o in PyObjectProxy._objects.items():
-            PyObjectProxy.load_object(i, o)
-        return PyObjectProxy.load_object(str(id(obj)), data)
+        PyObjectProxy.add_object(obj)
+        PyObjectProxy.load_objects(PyObjectProxy._objects)
+        return PyObjectProxy.get_object(str(id(obj)))
 
     def test_basic(self):
         class A:
@@ -87,11 +86,12 @@ class TestPyObjectProxy(TestBase):
             f.write("pass")
 
         temp_module_for_test = importlib.import_module("temp_module_for_test")
-        data = PyObjectProxy.add_object(temp_module_for_test)
+        PyObjectProxy.add_object(temp_module_for_test)
 
         sys.modules.pop("temp_module_for_test")
         os.remove("temp_module_for_test.py")
-        proxy = PyObjectProxy.load_object(str(id(temp_module_for_test)), data)
+        PyObjectProxy.load_objects(PyObjectProxy._objects)
+        proxy = PyObjectProxy.get_object(str(id(temp_module_for_test)))
         self.assertEqual(proxy._coredumpy_type, "module")
 
     def test_nonexist_attr(self):
@@ -99,11 +99,11 @@ class TestPyObjectProxy(TestBase):
             def __init__(self, x):
                 self.x = x
         o = A(142857)
-        obj = PyObjectProxy.add_object(o)
-        proxy = PyObjectProxy.load_object(str(id(o)), obj)
+        PyObjectProxy.add_object(o)
+        PyObjectProxy.load_objects(PyObjectProxy._objects)
+        proxy = PyObjectProxy.get_object(str(id(o)))
         with self.assertRaises(AttributeError):
             proxy.y
 
     def test_invalid(self):
-        self.assertEqual(PyObjectProxy.load_object("1", None), _unknown)
         self.assertEqual(repr(_unknown), "<Unknown Object>")

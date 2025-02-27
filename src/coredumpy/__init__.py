@@ -8,10 +8,9 @@ import coredumpy.pytest_hook as pytest_hook
 from .coredumpy import Coredumpy, dump, load
 from .except_hook import patch_except
 from .main import main
-from .type_support import add_supports
+from .type_support import TypeSupportBase
 from .unittest_hook import patch_unittest
 
-add_supports()
 
 __all__ = [
     "Coredumpy",
@@ -21,4 +20,5 @@ __all__ = [
     "patch_except",
     "patch_unittest",
     "pytest_hook",
+    "TypeSupportBase",
 ]

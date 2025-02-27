@@ -178,7 +178,7 @@ class Coredumpy:
             linecache.cache[filename] = (len(lines), None, lines, filename)
 
         PyObjectProxy.load_objects(data["objects"])
-        frame = PyObjectProxy.load_object(data["frame"])
+        frame = PyObjectProxy.get_object(data["frame"])
         pdb_instance = pdb.Pdb()
         pdb_instance.reset()
         pdb_instance.interaction(frame, None)

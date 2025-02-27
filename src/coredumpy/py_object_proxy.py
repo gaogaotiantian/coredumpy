@@ -7,6 +7,9 @@ import queue
 import types
 from typing import Callable
 
+from .type_support import TypeSupportManager, TypeSupportNotImplemented, NotReady
+from .types import builtin_types  # noqa: F401
+
 
 class _Unknown:
     def __repr__(self):
@@ -60,61 +63,55 @@ class PyObjectProxy:
 
     @classmethod
     def dump_object(cls, obj):
-        if obj is None:
-            return {"type": "None"}
-        elif isinstance(obj, (int, float, str, bool)):
-            return {"type": type(obj).__name__, "value": obj}
-        elif isinstance(obj, bytes):
-            return {"type": type(obj).__name__, "value": obj.hex()}
-        elif isinstance(obj, (list, tuple, set, frozenset)):
-            for item in obj:
-                cls._add_object(item)
-            return {"type": type(obj).__name__, "value": [str(id(item)) for item in obj]}
-        elif isinstance(obj, dict):
-            for key, value in obj.items():
-                cls._add_object(key)
-                cls._add_object(value)
-            return {"type": type(obj).__name__, "value": {str(id(key)): str(id(value)) for key, value in obj.items()}}
-        elif type(obj) in cls._encoders:
-            return cls._encoders[type(obj)](obj)
-        return cls.default_encode(obj)
-
-    @classmethod
-    def load_object(cls, id, data=None):
-        if id in cls._proxies:
-            return cls._proxies[id]
-        if data is None:
-            proxy = _unknown
-        elif data["type"] == "None":
-            proxy = None
-        elif data["type"] in ("int", "float", "str", "bool"):
-            proxy = data["value"]
-        elif data["type"] == "bytes":
-            proxy = bytes.fromhex(data["value"])
-        elif data["type"] == "list":
-            proxy = [cls.load_object(item_id, cls._objects.get(item_id)) for item_id in data["value"]]
-        elif data["type"] == "tuple":
-            proxy = tuple(cls.load_object(item_id, cls._objects.get(item_id)) for item_id in data["value"])
-        elif data["type"] == "set":
-            proxy = set(cls.load_object(item_id, cls._objects.get(item_id)) for item_id in data["value"])
-        elif data["type"] == "frozenset":
-            proxy = frozenset(cls.load_object(item_id, cls._objects.get(item_id)) for item_id in data["value"])
-        elif data["type"] == "dict":
-            proxy = {cls.load_object(key_id, cls._objects.get(key_id)):
-                     cls.load_object(value_id, cls._objects.get(value_id))
-                     for key_id, value_id in data["value"].items()}
-        elif data["type"] in cls._decoders:
-            proxy = cls._decoders[data["type"]](id, data)
-        else:
-            proxy = cls.default_decode(id, data)
-        cls._proxies[id] = proxy
-        return proxy
+        data, new_objects = TypeSupportManager.dump(obj)
+        if new_objects:
+            for obj in new_objects:
+                cls._add_object(obj)
+        return data
 
     @classmethod
     def load_objects(cls, data):
         cls._objects = data
-        for id, obj in data.items():
-            cls.load_object(id, obj)
+        unresolved_queue = queue.Queue()
+        not_ready_objects = set()
+        for key in cls._objects:
+            unresolved_queue.put(key)
+
+        while not unresolved_queue.empty():
+            obj_id = unresolved_queue.get()
+            data = cls._objects.get(obj_id)
+            if data is None:
+                proxy = _unknown
+            else:
+                if obj_id in cls._proxies:
+                    if obj_id in not_ready_objects:
+                        dependency = TypeSupportManager.reload(cls._proxies[obj_id], data, cls._proxies)
+                        if dependency:
+                            for dep_id in dependency:
+                                unresolved_queue.put(dep_id)
+                        else:
+                            not_ready_objects.remove(obj_id)
+                    continue
+                else:
+                    try:
+                        proxy, dependency = TypeSupportManager.load(data, cls._proxies)
+                        if dependency:
+                            not_ready_objects.add(obj_id)
+                            for dep_id in dependency:
+                                unresolved_queue.put(dep_id)
+                            unresolved_queue.put(obj_id)
+                        else:
+                            if obj_id in not_ready_objects:
+                                not_ready_objects.remove(obj_id)
+                    except TypeSupportNotImplemented:
+                        proxy = cls.default_decode(obj_id, data)
+
+            if proxy is not NotReady:
+                cls._proxies[obj_id] = proxy
+
+    @classmethod
+    def get_object(cls, obj_id):
+        return cls._proxies.get(obj_id, _unknown)
 
     @classmethod
     def default_encode(cls, obj):
