@@ -156,7 +156,7 @@ class Coredumpy:
         if output_file.endswith(".json"):
             file_open = open
         else:
-            file_open = gzip.open
+            file_open = gzip.open  # type: ignore
 
         with file_open(output_file, "wt") as f:
             f.write(json.dumps({
@@ -172,11 +172,11 @@ class Coredumpy:
         return output_file
 
     @classmethod
-    def load(cls, path):
+    def load(cls, path: str):
         if path.endswith(".json"):
             file_open = open
         else:
-            file_open = gzip.open
+            file_open = gzip.open  # type: ignore
 
         with file_open(path, "rt") as f:
             data = json.load(f)
@@ -198,11 +198,12 @@ class Coredumpy:
         container.clear()  # pragma: no cover
 
     @classmethod
-    def peek(cls, path):
+    def peek(cls, path: str):
         if path.endswith(".json"):
             file_open = open
         else:
-            file_open = gzip.open
+            file_open = gzip.open  # type: ignore
+
         with file_open(path, "rt") as f:
             data = json.load(f)
 

@@ -7,7 +7,7 @@ import os
 import re
 
 
-def get_dump_filename(frame, path, directory):
+def get_dump_filename(frame, path, directory) -> str:
     if path is not None:
         if directory is not None:
             raise ValueError("Cannot specify both path and directory")
