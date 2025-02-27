@@ -2,108 +2,35 @@
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
 
-import importlib
-import sys
-
-from coredumpy.py_object_proxy import PyObjectProxy, _unknown
+from coredumpy.py_object_proxy import PyObjectProxy
+from coredumpy.py_object_container import PyObjectContainer
 
 from .base import TestBase
 
 
 class TestPyObjectProxy(TestBase):
-    def tearDown(self):
-        PyObjectProxy.clear()
-        return super().tearDown()
-
-    def convert_object(self, obj):
-        data = PyObjectProxy.add_object(obj)
-        for i, o in PyObjectProxy._objects.items():
-            PyObjectProxy.load_object(i, o)
-        return PyObjectProxy.load_object(str(id(obj)), data)
-
     def test_basic(self):
-        class A:
-            def __init__(self, x):
-                self.x = x
-        obj = A(142857)
-        proxy = self.convert_object(obj)
-        self.assertEqual(proxy.x, 142857)
-        self.assertEqual(dir(proxy), ['x'])
-        self.assertIn('A object at 0x', repr(proxy))
+        proxy = PyObjectProxy()
+        proxy._coredumpy_type = "A"
+        proxy._coredumpy_id = 142857
+        self.assertEqual(repr(proxy), "<A object at 0x22e09>")
 
-    def test_tuple(self):
-        obj = (1, 2, 3)
-        proxy = self.convert_object(obj)
-        self.assertEqual(proxy, (1, 2, 3))
+    def test_container(self):
+        proxy = PyObjectProxy()
+        proxy._coredumpy_type = "A"
+        proxy._coredumpy_id = 142857
 
-    def test_set(self):
-        obj = {1, 2, 3}
-        proxy = self.convert_object(obj)
-        self.assertEqual(proxy, {1, 2, 3})
+        with self.assertRaises(RuntimeError):
+            proxy.x
 
-    def test_frozenset(self):
-        obj = frozenset([1, 2, 3])
-        proxy = self.convert_object(obj)
-        self.assertEqual(proxy, frozenset([1, 2, 3]))
+        container = PyObjectContainer()
+        proxy.link_container(container)
 
-    def test_bool(self):
-        obj = True
-        proxy = self.convert_object(obj)
-        self.assertEqual(proxy, True)
-
-    def test_bytes(self):
-        obj = b"hello"
-        proxy = self.convert_object(obj)
-        self.assertEqual(proxy, b"hello")
-
-    def test_builtins(self):
-        obj = object()
-        proxy = self.convert_object(obj)
-        self.assertEqual(proxy._coredumpy_type, "object")
-
-    def test_recursion(self):
-        class A:
-            _reference = []
-
-            @property
-            def parent(self):
-                obj = A()
-                self._reference.append(obj)
-                return obj
-
-        obj = A()
-        proxy = self.convert_object(obj)
-        for i in range(50):
-            self.assertIn("A", proxy._coredumpy_type)
-            proxy = proxy.parent
-
-    def test_module(self):
-        import os
-        proxy = self.convert_object(os)
-        self.assertEqual(proxy, os)
-
-        # Create a module, then delete the file before converting
-        with open("temp_module_for_test.py", "w") as f:
-            f.write("pass")
-
-        temp_module_for_test = importlib.import_module("temp_module_for_test")
-        data = PyObjectProxy.add_object(temp_module_for_test)
-
-        sys.modules.pop("temp_module_for_test")
-        os.remove("temp_module_for_test.py")
-        proxy = PyObjectProxy.load_object(str(id(temp_module_for_test)), data)
-        self.assertEqual(proxy._coredumpy_type, "module")
-
-    def test_nonexist_attr(self):
-        class A:
-            def __init__(self, x):
-                self.x = x
-        o = A(142857)
-        obj = PyObjectProxy.add_object(o)
-        proxy = PyObjectProxy.load_object(str(id(o)), obj)
         with self.assertRaises(AttributeError):
-            proxy.y
+            proxy.x
 
-    def test_invalid(self):
-        self.assertEqual(PyObjectProxy.load_object("1", None), _unknown)
-        self.assertEqual(repr(_unknown), "<Unknown Object>")
+        o = 123456
+        proxy.x = str(id(o))
+        container.add_object(o)
+        container.load_objects(container.get_objects())
+        self.assertEqual(proxy.x, o)

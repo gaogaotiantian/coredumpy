@@ -19,7 +19,7 @@ from types import CodeType
 from typing import Callable, Optional, Union
 
 from .patch import patch_all
-from .py_object_proxy import PyObjectProxy
+from .py_object_container import PyObjectContainer
 from .utils import get_dump_filename
 
 
@@ -129,9 +129,11 @@ class Coredumpy:
             assert inner_frame is not None
             frame = inner_frame.f_back
 
+        container = PyObjectContainer()
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            PyObjectProxy.add_object(frame)
+            container.add_object(frame)
 
         output_file = get_dump_filename(frame, path, directory)
         frame_id = str(id(frame))
@@ -153,14 +155,14 @@ class Coredumpy:
 
         with gzip.open(output_file, "wt") as f:
             json.dump({
-                "objects": PyObjectProxy._objects,
+                "objects": container.get_objects(),
                 "frame": frame_id,
                 "files": file_lines,
                 "description": description,
                 "metadata": cls.get_metadata()
             }, f)
 
-        PyObjectProxy.clear()
+        container.clear()
 
         return output_file
 
@@ -177,12 +179,13 @@ class Coredumpy:
         for filename, lines in data["files"].items():
             linecache.cache[filename] = (len(lines), None, lines, filename)
 
-        PyObjectProxy.load_objects(data["objects"])
-        frame = PyObjectProxy.load_object(data["frame"])
+        container = PyObjectContainer()
+        container.load_objects(data["objects"])
+        frame = container.get_object(data["frame"])
         pdb_instance = pdb.Pdb()
         pdb_instance.reset()
         pdb_instance.interaction(frame, None)
-        PyObjectProxy.clear()  # pragma: no cover
+        container.clear()  # pragma: no cover
 
     @classmethod
     def peek(cls, path):

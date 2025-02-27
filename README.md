@@ -104,6 +104,6 @@ dymanic features.
 
 ## License
 
-Copyright 2024 Tian Gao.
+Copyright 2024-2025 Tian Gao.
 
 Distributed under the terms of the  [Apache 2.0 license](https://github.com/gaogaotiantian/coredumpy/blob/master/LICENSE).

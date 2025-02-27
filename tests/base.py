@@ -9,6 +9,8 @@ import tempfile
 import textwrap
 import unittest
 
+from coredumpy.py_object_container import PyObjectContainer
+
 from .util import normalize_commands
 
 
@@ -66,3 +68,9 @@ class TestBase(unittest.TestCase):
         stdout = stdout.decode(errors='backslashreplace')
         stderr = stderr.decode(errors='backslashreplace')
         return stdout, stderr
+
+    def convert_object(self, obj):
+        container = PyObjectContainer()
+        container.add_object(obj)
+        container.load_objects(container.get_objects())
+        return container.get_object(str(id(obj)))
