@@ -88,6 +88,19 @@ class TestBasic(TestBase):
         self.assertIn("-> g(x)", stdout)
         self.assertIn("142857", stdout)
 
+    def test_json(self):
+        script = """
+            x = 3
+            raise ValueError("test")
+        """
+
+        stdout, _ = self.run_test(script, "coredumpy_dump.json", [
+            "p x + 3",
+            "q"
+        ], use_cli_run=True)
+
+        self.assertIn("6", stdout)
+
     def test_cli_invalid(self):
         stdout, _ = self.run_run([])
         self.assertIn("Error", stdout)
