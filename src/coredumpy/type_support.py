@@ -10,12 +10,7 @@ from typing import Callable, Optional, Union
 from .py_object_proxy import PyObjectProxy
 
 
-class TypeSupportLazyLoad(Exception):
-    pass
-
-
-class NotReady:
-    pass
+NotReady = object()
 
 
 class TypeSupportMeta(abc.ABCMeta):
