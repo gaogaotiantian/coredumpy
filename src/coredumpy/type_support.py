@@ -7,12 +7,10 @@ import inspect
 import types
 from typing import Callable, Optional, Union
 
+from .py_object_proxy import PyObjectProxy
+
 
 class TypeSupportLazyLoad(Exception):
-    pass
-
-
-class TypeSupportNotImplemented(Exception):
     pass
 
 
@@ -31,17 +29,17 @@ class TypeSupportBase(metaclass=TypeSupportMeta):
 
     @classmethod
     @abc.abstractmethod
-    def get_type(cls) -> tuple[Union[type, Callable], str]:
+    def get_type(cls) -> tuple[Union[type, Callable], str]:  # pragma: no cover
         ...
 
     @classmethod
     @abc.abstractmethod
-    def dump(cls, obj) -> tuple[dict, Optional[list]]:
+    def dump(cls, obj) -> tuple[dict, Optional[list]]:  # pragma: no cover
         ...
 
     @classmethod
     @abc.abstractmethod
-    def load(cls, data: dict, objects: dict) -> tuple[object, Optional[list[str]]]:
+    def load(cls, data: dict, objects: dict) -> tuple[object, Optional[list[str]]]:  # pragma: no cover
         ...
 
 
@@ -49,7 +47,7 @@ class TypeSupportContainerBase(TypeSupportBase):
 
     @classmethod
     @abc.abstractmethod
-    def reload(cls, container, data, objects: dict) -> tuple[object, Optional[list[str]]]:
+    def reload(cls, container, data, objects: dict) -> tuple[object, Optional[list[str]]]:  # pragma: no cover
         ...
 
 
@@ -82,11 +80,11 @@ class TypeSupportManager:
         cls._lazy_supports = lazy_supports
 
     @classmethod
-    def dump(cls, obj: object) -> dict:
+    def dump(cls, obj: object):
         if type(obj) in cls._encoders:
             try:
                 return cls._encoders[type(obj)].dump(obj)
-            except TypeSupportNotImplemented:
+            except NotImplementedError:
                 pass
         return cls.default_dump(obj)
 
@@ -94,15 +92,18 @@ class TypeSupportManager:
     def load(cls, data, objects):
         typename = data["type"]
         if typename in cls._decoders:
-            return cls._decoders[typename].load(data, objects)
-        raise TypeSupportNotImplemented()
+            try:
+                return cls._decoders[typename].load(data, objects)
+            except NotImplementedError:
+                pass
+        return cls.default_load(data, objects)
 
     @classmethod
     def reload(cls, container, data, objects):
         typename = data["type"]
         if typename in cls._decoders:
             return cls._decoders[typename].reload(container, data, objects)
-        raise TypeSupportNotImplemented()
+        raise NotImplementedError(typename)
 
     @classmethod
     def default_dump(cls, obj):
@@ -131,3 +132,11 @@ class TypeSupportManager:
             # inspect.getmembers may fail on some objects
             pass
         return data, new_objects
+
+    @classmethod
+    def default_load(cls, data, objects):
+        obj = PyObjectProxy()
+        obj._coredumpy_type = data["type"]
+        for attr, val in data.get("attrs", {}).items():
+            setattr(obj, attr, val)
+        return obj, None

@@ -4,7 +4,7 @@
 import importlib
 import types
 
-from ..type_support import TypeSupportBase, TypeSupportContainerBase, TypeSupportNotImplemented, NotReady
+from ..type_support import TypeSupportBase, TypeSupportContainerBase, NotReady
 
 
 class NoneSupport(TypeSupportBase):
@@ -225,5 +225,5 @@ class ModuleSupport(TypeSupportBase):
         try:
             module = importlib.import_module(data["value"])
         except ImportError:
-            raise TypeSupportNotImplemented()
+            raise NotImplementedError(data["value"])
         return module, None

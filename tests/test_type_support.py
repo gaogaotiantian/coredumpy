@@ -3,7 +3,8 @@
 
 import sys
 
-from coredumpy.py_object_proxy import PyObjectProxy
+from coredumpy.py_object_container import PyObjectContainer
+from coredumpy.type_support import TypeSupportBase
 
 from .base import TestBase
 
@@ -14,7 +15,33 @@ class TestTypeSupport(TestBase):
         self.assertIsNone(sys.modules.get("decimal"))
         import decimal
         d = decimal.Decimal('3.14')
-        PyObjectProxy.add_object(d)
-        PyObjectProxy.load_objects(PyObjectProxy._objects)
-        self.assertIsInstance(PyObjectProxy._proxies[str(id(d))], decimal.Decimal)
-        self.assertEqual(PyObjectProxy._proxies[str(id(d))], d)
+        container = PyObjectContainer()
+        container.add_object(d)
+        container.load_objects(container.get_objects())
+        self.assertIsInstance(container._proxies[str(id(d))], decimal.Decimal)
+        self.assertEqual(container._proxies[str(id(d))], d)
+
+    def test_not_implemented(self):
+        class A:
+            def __init__(self):
+                A.x = 3
+
+        class ASupport(TypeSupportBase):
+            @classmethod
+            def get_type(cls):
+                return A, "tests.test_type_support.A"
+
+            @classmethod
+            def dump(cls, obj):
+                raise NotImplementedError
+
+            @classmethod
+            def load(cls, data, objects):
+                raise NotImplementedError
+
+        o = A()
+        container = PyObjectContainer()
+        container.add_object(o)
+        container.load_objects(container.get_objects())
+        a = container.get_object(str(id(o)))
+        self.assertEqual(a.x, 3)
