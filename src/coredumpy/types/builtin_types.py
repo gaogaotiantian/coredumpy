@@ -96,7 +96,7 @@ class ListSupport(TypeSupportContainerBase):
         dependency = []
         for i, item_id in enumerate(data["value"]):
             if item_id not in objects:
-                container[i] = NotReady
+                assert False
                 dependency.append(item_id)
             else:
                 container[i] = objects[item_id]

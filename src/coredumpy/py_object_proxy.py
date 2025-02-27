@@ -38,36 +38,22 @@ class PyObjectProxy:
 
     @classmethod
     def add_object(cls, obj):
-        if str(id(obj)) not in cls._objects:
-            cls._current_recursion_depth = 0
-            cls._add_object(obj)
-            while not cls._pending_objects.empty():
-                depth, o = cls._pending_objects.get()
-                cls._current_recursion_depth = depth
-                cls._objects[str(id(o))] = cls.dump_object(o)
-            cls._current_recursion_depth = 0
-            cls._pending_objects = queue.Queue()
+        objects = {}
+        curr_recursion_depth = 0
+        pending_objects = [obj]
+        while curr_recursion_depth < cls._max_recursion_depth and pending_objects:
+            next_objects = {}
+            for o in pending_objects:
+                data, new_objects = TypeSupportManager.dump(o)
+                objects[str(id(o))] = data
+                if new_objects:
+                    for new_obj in new_objects:
+                        if str(id(new_obj)) not in objects:
+                            next_objects[str(id(new_obj))] = new_obj
+            curr_recursion_depth += 1
+            pending_objects = list(next_objects.values())
+        cls._objects.update(objects)
         return cls._objects[str(id(obj))]
-
-    @classmethod
-    def _add_object(cls, obj):
-        if cls._current_recursion_depth > cls._max_recursion_depth:
-            return
-        id_str = str(id(obj))
-        if id_str not in cls._objects:
-            cls._objects[id_str] = {"type": "_coredumpy_unknown"}
-            if obj is cls._objects or obj is cls._pending_objects:
-                # Avoid changing the dict while dumping
-                return
-            cls._pending_objects.put((cls._current_recursion_depth + 1, obj))
-
-    @classmethod
-    def dump_object(cls, obj):
-        data, new_objects = TypeSupportManager.dump(obj)
-        if new_objects:
-            for obj in new_objects:
-                cls._add_object(obj)
-        return data
 
     @classmethod
     def load_objects(cls, objects):

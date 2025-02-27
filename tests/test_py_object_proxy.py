@@ -67,6 +67,10 @@ class TestPyObjectProxy(TestBase):
         self.assertIs(proxy[0].pop(), proxy[1]["key"][1])
         self.assertIs(proxy, proxy[1]["tuple"])
 
+        obj = [([([([([])])])])]
+        proxy = self.convert_object(obj)
+        self.assertEqual(proxy, obj)
+
     def test_builtins(self):
         obj = object()
         proxy = self.convert_object(obj)
