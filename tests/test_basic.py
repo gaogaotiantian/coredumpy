@@ -88,6 +88,19 @@ class TestBasic(TestBase):
         self.assertIn("-> g(x)", stdout)
         self.assertIn("142857", stdout)
 
+    def test_json(self):
+        script = """
+            x = 3
+            raise ValueError("test")
+        """
+
+        stdout, _ = self.run_test(script, "coredumpy_dump.json", [
+            "p x + 3",
+            "q"
+        ], use_cli_run=True)
+
+        self.assertIn("6", stdout)
+
     def test_cli_invalid(self):
         stdout, _ = self.run_run([])
         self.assertIn("Error", stdout)
@@ -107,12 +120,17 @@ class TestBasic(TestBase):
                 import coredumpy
                 coredumpy.dump(description="test", directory={repr(tmpdir)})
             """
+            script_json = f"""
+                import coredumpy
+                coredumpy.dump(description="test", path={repr(os.path.join(tmpdir, "dump.json"))})
+            """
             self.run_script(script)
             self.run_script(script)
+            self.run_script(script_json)
             with open(os.path.join(tmpdir, "invalid"), "w") as f:
                 f.write("{invalid}")
 
-            self.assertEqual(len(os.listdir(tmpdir)), 3)
+            self.assertEqual(len(os.listdir(tmpdir)), 4)
             stdout, _ = self.run_peek([tmpdir])
             stdout2, _ = self.run_peek([os.path.join(tmpdir, file) for file in os.listdir(tmpdir)])
 

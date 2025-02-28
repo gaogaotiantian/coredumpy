@@ -153,22 +153,32 @@ class Coredumpy:
 
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-        with gzip.open(output_file, "wt") as f:
-            json.dump({
+        if output_file.endswith(".json"):
+            file_open = open
+        else:
+            file_open = gzip.open  # type: ignore
+
+        with file_open(output_file, "wt") as f:
+            f.write(json.dumps({
                 "objects": container.get_objects(),
                 "frame": frame_id,
                 "files": file_lines,
                 "description": description,
                 "metadata": cls.get_metadata()
-            }, f)
+            }))
 
         container.clear()
 
         return output_file
 
     @classmethod
-    def load(cls, path):
-        with gzip.open(path, "rt") as f:
+    def load(cls, path: str):
+        if path.endswith(".json"):
+            file_open = open
+        else:
+            file_open = gzip.open  # type: ignore
+
+        with file_open(path, "rt") as f:
             data = json.load(f)
 
         from coredumpy import __version__
@@ -188,8 +198,13 @@ class Coredumpy:
         container.clear()  # pragma: no cover
 
     @classmethod
-    def peek(cls, path):
-        with gzip.open(path, "rt") as f:
+    def peek(cls, path: str):
+        if path.endswith(".json"):
+            file_open = open
+        else:
+            file_open = gzip.open  # type: ignore
+
+        with file_open(path, "rt") as f:
             data = json.load(f)
 
         from coredumpy import __version__
