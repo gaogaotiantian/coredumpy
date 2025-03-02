@@ -232,7 +232,6 @@ class ModuleSupport(TypeSupportBase):
 class FrameLocalsProxySupport(DictSupport):
     @classmethod
     def get_type(cls):
-        import sys
         if sys.version_info < (3, 13):
             raise NotImplementedError
         return type(sys._getframe().f_locals), "FrameLocalsProxy"
