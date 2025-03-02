@@ -36,6 +36,34 @@ class TestBasic(TestBase):
         self.assertIn("[3, {'a': [4, None]}]", stdout)
         self.assertIn("142857", stdout)
 
+    def test_simple_with_dumps(self):
+        script = """
+            import coredumpy
+            def g(arg):
+                with open("coredumpy_dump.json", "w") as f:
+                    f.write(coredumpy.dumps())
+                return arg
+            def f():
+                x = 142857
+                y = [3, {'a': [4, None]}]
+                g(y)
+            f()
+        """
+        stdout, _ = self.run_test(script, "coredumpy_dump.json", [
+            "w",
+            "p arg",
+            "u",
+            "p x",
+            "q"
+        ])
+
+        self.assertIn("-> f()", stdout)
+        self.assertIn("script.py(11)<module>", stdout)
+        self.assertIn("-> g(y)", stdout)
+        self.assertIn("script.py(5)g()", stdout)
+        self.assertIn("[3, {'a': [4, None]}]", stdout)
+        self.assertIn("142857", stdout)
+
     def test_directory(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             child_dir = os.path.join(tmpdir, "child")
