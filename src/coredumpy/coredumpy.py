@@ -115,6 +115,8 @@ class Coredumpy:
 
         @param frame:
             The top frame to dump, if not specified, the frame of the caller will be used
+        @param description:
+            The description of the dump, it will be saved in the dump file
         @param path:
             The path to save the dump file. It could be a string or a callable that returns a string.
             if not specified, the default filename will be used
@@ -122,6 +124,39 @@ class Coredumpy:
             The directory to save the dump file, only works when path is not specified.
         @return:
             The path of the dump file
+        """
+        if frame is None:
+            inner_frame = inspect.currentframe()
+            assert inner_frame is not None
+            frame = inner_frame.f_back
+
+        output_file = get_dump_filename(frame, path, directory)
+
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+        if output_file.endswith(".json"):
+            file_open = open
+        else:
+            file_open = gzip.open  # type: ignore
+
+        with file_open(output_file, "wt") as f:
+            f.write(cls.dumps(frame, description=description))
+
+        return output_file
+
+    @classmethod
+    def dumps(cls,
+              frame: Optional[types.FrameType] = None,
+              *,
+              description: Optional[str] = None):
+        """
+        dump the current frame stack to a string
+        @param frame:
+            The top frame to dump, if not specified, the frame of the caller will be used
+        @param description:
+            The description of the dump, it will be saved in the dump file
+        @return:
+            The string of the dump
         """
         files = set()
         if frame is None:
@@ -135,7 +170,6 @@ class Coredumpy:
             warnings.simplefilter("ignore")
             container.add_object(frame)
 
-        output_file = get_dump_filename(frame, path, directory)
         frame_id = str(id(frame))
 
         while frame:
@@ -151,25 +185,17 @@ class Coredumpy:
                 with tokenize.open(filename) as f:
                     file_lines[filename] = f.readlines()
 
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
-
-        if output_file.endswith(".json"):
-            file_open = open
-        else:
-            file_open = gzip.open  # type: ignore
-
-        with file_open(output_file, "wt") as f:
-            f.write(json.dumps({
-                "objects": container.get_objects(),
-                "frame": frame_id,
-                "files": file_lines,
-                "description": description,
-                "metadata": cls.get_metadata()
-            }))
+        ret = json.dumps({
+            "objects": container.get_objects(),
+            "frame": frame_id,
+            "files": file_lines,
+            "description": description,
+            "metadata": cls.get_metadata()
+        })
 
         container.clear()
 
-        return output_file
+        return ret
 
     @classmethod
     def load(cls, path: str):
