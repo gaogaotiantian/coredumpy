@@ -4,7 +4,8 @@
 import importlib
 import sys
 
-from coredumpy.py_object_container import PyObjectContainer, _unknown
+from coredumpy.py_object_container import PyObjectContainer
+from coredumpy.py_object_proxy import _unknown
 from coredumpy.type_support import TypeSupportBase
 
 from .base import TestBase

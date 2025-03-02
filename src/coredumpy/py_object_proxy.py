@@ -2,6 +2,14 @@
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
 
+class _Unknown:
+    def __repr__(self):
+        return "<Unknown Object>"
+
+
+_unknown = _Unknown()
+
+
 class PyObjectProxy:
     def __init__(self):
         self._coredumpy_attrs = {}
@@ -20,7 +28,7 @@ class PyObjectProxy:
         if self._coredumpy_container is None:
             raise RuntimeError("Container is not linked")
         if item in self._coredumpy_attrs:
-            return self._coredumpy_container._proxies[self._coredumpy_attrs[item]]
+            return self._coredumpy_container._proxies.get(self._coredumpy_attrs[item], _unknown)
         raise AttributeError(f"'{self._coredumpy_type}' object has no attribute '{item}'")
 
     def __repr__(self):
