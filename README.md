@@ -55,6 +55,8 @@ import coredumpy
 coredumpy.dump()
 # Specify a specific frame as the top frame to dump
 coredumpy.dump(frame)
+# Set the search depth to 2 to reduce the dump size
+coredumpy.dump(depth=2)
 # Specify a filename to save the dump, without it a unique name will be generated
 coredumpy.dump(path='coredumpy.dump')
 # You can use a function for path

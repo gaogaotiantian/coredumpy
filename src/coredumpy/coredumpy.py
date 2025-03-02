@@ -108,6 +108,7 @@ class Coredumpy:
              frame: Optional[types.FrameType] = None,
              *,
              description: Optional[str] = None,
+             depth: Optional[int] = None,
              path: Optional[Union[str, Callable[[], str]]] = None,
              directory: Optional[str] = None):
         """
@@ -117,6 +118,8 @@ class Coredumpy:
             The top frame to dump, if not specified, the frame of the caller will be used
         @param description:
             The description of the dump, it will be saved in the dump file
+        @param depth:
+            The depth of the object search
         @param path:
             The path to save the dump file. It could be a string or a callable that returns a string.
             if not specified, the default filename will be used
@@ -140,7 +143,7 @@ class Coredumpy:
             file_open = gzip.open  # type: ignore
 
         with file_open(output_file, "wt") as f:
-            f.write(cls.dumps(frame, description=description))
+            f.write(cls.dumps(frame, description=description, depth=depth))
 
         return output_file
 
@@ -148,13 +151,16 @@ class Coredumpy:
     def dumps(cls,
               frame: Optional[types.FrameType] = None,
               *,
-              description: Optional[str] = None):
+              description: Optional[str] = None,
+              depth: Optional[int] = None) -> str:
         """
         dump the current frame stack to a string
         @param frame:
             The top frame to dump, if not specified, the frame of the caller will be used
         @param description:
             The description of the dump, it will be saved in the dump file
+        @param depth:
+            The depth of the object search
         @return:
             The string of the dump
         """
@@ -166,13 +172,19 @@ class Coredumpy:
 
         container = PyObjectContainer()
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            container.add_object(frame)
-
         frame_id = str(id(frame))
 
+        # The intuitive minimum depth is 1, but we start the count from the
+        # frame, which needs frame->f_locals to access the local variables
+        # pdb also needs frame->f_code->co_filename to access the source code
+        # So we need to add 2 to the depth
+        if depth is not None:
+            depth = depth + 2
+
         while frame:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                container.add_object(frame, depth)
             filename = frame.f_code.co_filename
             if filename not in files:
                 files.add(filename)

@@ -5,15 +5,7 @@ import queue
 
 from .types import builtin_types  # noqa: F401
 from .type_support import TypeSupportManager, NotReady
-from .py_object_proxy import PyObjectProxy
-
-
-class _Unknown:
-    def __repr__(self):
-        return "<Unknown Object>"
-
-
-_unknown = _Unknown()
+from .py_object_proxy import PyObjectProxy, _unknown
 
 
 class PyObjectContainer:
@@ -27,12 +19,14 @@ class PyObjectContainer:
         self._objects.clear()
         self._proxies.clear()
 
-    def add_object(self, obj):
+    def add_object(self, obj, depth=None):
         TypeSupportManager.load_lazy_supports()
         objects = {}
         curr_recursion_depth = 0
         pending_objects = [obj]
-        while curr_recursion_depth < self._max_recursion_depth and pending_objects:
+        if depth is None:
+            depth = self._max_recursion_depth
+        while curr_recursion_depth < depth and pending_objects:
             next_objects = {}
             for o in pending_objects:
                 data, new_objects = TypeSupportManager.dump(o)

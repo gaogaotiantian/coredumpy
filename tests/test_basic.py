@@ -64,6 +64,23 @@ class TestBasic(TestBase):
         self.assertIn("[3, {'a': [4, None]}]", stdout)
         self.assertIn("142857", stdout)
 
+    def test_depth(self):
+        script = """
+            import coredumpy
+            def f():
+                x = 142857
+                y = [3, {'a': [4, None]}]
+                coredumpy.dump(path="coredumpy_dump", depth=1)
+            f()
+        """
+        stdout, _ = self.run_test(script, "coredumpy_dump", [
+            "p x",
+            "p y"
+        ])
+
+        self.assertIn("[3, <Unknown Object>]", stdout)
+        self.assertIn("142857", stdout)
+
     def test_directory(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             child_dir = os.path.join(tmpdir, "child")
