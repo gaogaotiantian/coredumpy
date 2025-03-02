@@ -5,7 +5,7 @@
 __version__ = "0.1.0"
 
 import coredumpy.pytest_hook as pytest_hook
-from .coredumpy import Coredumpy, dump, load
+from .coredumpy import Coredumpy, dump, dumps, load
 from .except_hook import patch_except
 from .main import main
 from .type_support import TypeSupportBase
@@ -15,6 +15,7 @@ from .unittest_hook import patch_unittest
 __all__ = [
     "Coredumpy",
     "dump",
+    "dumps",
     "load",
     "main",
     "patch_except",

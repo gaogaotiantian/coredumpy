@@ -294,6 +294,7 @@ class Coredumpy:
 
 
 dump = Coredumpy.dump
+dumps = Coredumpy.dumps
 load = Coredumpy.load
 peek = Coredumpy.peek
 run = Coredumpy.run
