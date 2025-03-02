@@ -53,7 +53,10 @@ class TypeSupportManager:
 
     @classmethod
     def add_support(cls, support: TypeSupportBase):
-        encode_type, decode_annotation = support.get_type()
+        try:
+            encode_type, decode_annotation = support.get_type()
+        except NotImplementedError:
+            return
         if isinstance(encode_type, type):
             cls._encoders[encode_type] = support
         else:
