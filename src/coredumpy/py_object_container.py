@@ -13,10 +13,12 @@ class PyObjectContainer:
 
     def __init__(self):
         self._objects = {}
+        self._objects_holder = {}
         self._proxies = {}
 
     def clear(self):
         self._objects.clear()
+        self._objects_holder.clear()
         self._proxies.clear()
 
     def add_object(self, obj, depth=None):
@@ -31,6 +33,9 @@ class PyObjectContainer:
             for o in pending_objects:
                 data, new_objects = TypeSupportManager.dump(o)
                 objects[str(id(o))] = data
+                # To avoid repeated object ids, we keep a reference to all
+                # objects in the container
+                self._objects_holder[str(id(o))] = o
                 if new_objects:
                     for new_obj in new_objects:
                         if str(id(new_obj)) not in objects:
