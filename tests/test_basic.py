@@ -114,6 +114,9 @@ class TestBasic(TestBase):
                 ])
 
                 self.assertIn("hello world", stdout)
+
+                stdout, _ = self.run_script("import coredumpy")
+                self.assertIn("hello world", stdout)
             finally:
                 os.chdir(cwd)
 
