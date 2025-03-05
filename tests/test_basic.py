@@ -2,6 +2,8 @@
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
 
+import contextlib
+import io
 import os
 import tempfile
 
@@ -117,6 +119,12 @@ class TestBasic(TestBase):
 
                 stdout, _ = self.run_script("import coredumpy")
                 self.assertIn("hello world", stdout)
+
+                from coredumpy.conf_hook import startup_conf
+                buf = io.StringIO()
+                with contextlib.redirect_stdout(buf):
+                    startup_conf()
+                self.assertIn("hello world", buf.getvalue())
             finally:
                 os.chdir(cwd)
 
