@@ -90,6 +90,64 @@ coredumpy peek <your_dump_directory>
 coredumpy peek <your_dump_file1> <your_dump_file2>
 ```
 
+## Type support
+
+`coredumpy` supports the common built-in types like `float`, `int`, `str`, `list`,
+`dict` etc. For all the other types that it can't recognize, it will treat them as
+a Python object, which means `coredumpy` will iterate and store all the attributes
+of the object.
+
+You can add support for any arbitrary types by creating a class that inherits
+`coredumpy.TypeSupportBase`. You need to finish the following class methods in
+order to make it work:
+
+```python
+@classmethod
+def get_type(cls) -> tuple[Union[type, Callable], str]:
+    # returns a tuple with two elements:
+    # 0. type (or a callable for lazy load) for dump
+    #    coredumpy will dispatch the objects with this type to the dump method
+    # 1. a type string for load
+    #    coredumpy will dispatch the data with this type to the load method
+
+@classmethod
+def dump(cls, obj) -> tuple[dict, Optional[list]]:
+    # takes the object to be dumped
+    # returns a tuple with two elements:
+    # 0. a json-serializable dict, which will be stored in the dump file
+    # 1. a list that contains the objects needed to be dumped for this object
+    #    if none needed (the object is not a container), use None
+
+@classmethod
+def load(cls, data: dict, objects: dict) -> tuple[object, Optional[list[str]]]:
+    # takes the dict data from `dump` method and a dict of all objects with the ids
+    # as keys
+    # returns a tuple with two elements:
+    # 0. the restored object. If not ready, return coredumpy.NotReady
+    # 1. a list of the ids of dependent objects, if not applicable, use None
+```
+
+If the type is a container, inherit `coredumpy.TypeSupportContainerBase` and
+implement an extra method:
+
+```python
+@classmethod
+def reload(cls, container, data, objects: dict) -> tuple[object, Optional[list[str]]]:
+    # takes the already built container, the other arguments are the same as `load`
+    # returns the same as `load`
+    # This is helpful to create a placeholder first with `load` so the other objects
+    # can reference to it, and build the placeholder later
+```
+
+You only need to create the class, it will be automatically registered.
+
+## Startup script
+
+In order to import the type supports and do some customization, `coredumpy` provides
+a way to run an arbitrary script after importing `coredumpy`. You can put a
+`conf_coredumpy.py` file in your current working directory. If `coredumpy` discovers
+it, the script will be executed. You can put anything you need in the script.
+
 ## About the data
 
 Besides a couple of builtin types, coredumpy treats almost every object as an

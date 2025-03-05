@@ -2,6 +2,8 @@
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
 
+import contextlib
+import io
 import os
 import tempfile
 
@@ -93,6 +95,38 @@ class TestBasic(TestBase):
             self.run_script(script)
             self.assertEqual(len(os.listdir(tmpdir)), 3)
             self.assertEqual(len(os.listdir(child_dir)), 1)
+
+    def test_conf(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            try:
+                cwd = os.getcwd()
+                os.chdir(tmpdir)
+
+                with open("conf_coredumpy.py", "w") as f:
+                    f.write("print('hello world')")
+
+                script = """
+                    import coredumpy
+                    def f():
+                        coredumpy.dump(path="coredumpy_dump")
+                    f()
+                """
+                stdout, _ = self.run_test(script, "coredumpy_dump", [
+                    "q"
+                ])
+
+                self.assertIn("hello world", stdout)
+
+                stdout, _ = self.run_script("import coredumpy")
+                self.assertIn("hello world", stdout)
+
+                from coredumpy.conf_hook import startup_conf
+                buf = io.StringIO()
+                with contextlib.redirect_stdout(buf):
+                    startup_conf()
+                self.assertIn("hello world", buf.getvalue())
+            finally:
+                os.chdir(cwd)
 
     def test_except(self):
         script = """
