@@ -8,8 +8,11 @@ import coredumpy.pytest_hook as pytest_hook
 from .coredumpy import Coredumpy, dump, dumps, load
 from .except_hook import patch_except
 from .main import main
-from .type_support import TypeSupportBase
+from .type_support import TypeSupportBase, TypeSupportContainerBase, NotReady
 from .unittest_hook import patch_unittest
+from .conf_hook import startup_conf
+
+startup_conf()
 
 
 __all__ = [
@@ -22,4 +25,6 @@ __all__ = [
     "patch_unittest",
     "pytest_hook",
     "TypeSupportBase",
+    "TypeSupportContainerBase",
+    "NotReady",
 ]

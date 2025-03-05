@@ -94,6 +94,29 @@ class TestBasic(TestBase):
             self.assertEqual(len(os.listdir(tmpdir)), 3)
             self.assertEqual(len(os.listdir(child_dir)), 1)
 
+    def test_conf(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            try:
+                cwd = os.getcwd()
+                os.chdir(tmpdir)
+
+                with open("conf_coredumpy.py", "w") as f:
+                    f.write("print('hello world')")
+
+                script = """
+                    import coredumpy
+                    def f():
+                        coredumpy.dump(path="coredumpy_dump")
+                    f()
+                """
+                stdout, _ = self.run_test(script, "coredumpy_dump", [
+                    "q"
+                ])
+
+                self.assertIn("hello world", stdout)
+            finally:
+                os.chdir(cwd)
+
     def test_except(self):
         script = """
             import coredumpy
