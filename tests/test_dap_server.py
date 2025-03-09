@@ -7,8 +7,11 @@ import re
 import signal
 import socket
 import subprocess
+import sys
 import tempfile
 import textwrap
+import threading
+import unittest
 
 from .base import TestBase
 from .util import normalize_commands
@@ -35,6 +38,10 @@ class DapServer:
             self._process.wait()
             raise RuntimeError("Failed to start DAP server")
 
+        # This is necessary because it could block the server
+        self._stdout_releaser = threading.Thread(target=self.release_pipe, args=(self._process.stdout, ))
+        self._stdout_releaser.start()
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -43,6 +50,11 @@ class DapServer:
             self._process.wait()
             self._process.stdout.close()
             self._process = None
+            self._stdout_releaser.join()
+
+    def release_pipe(self, pipe):
+        for line in pipe:
+            pass
 
     def kill(self):
         self._process.send_signal(signal.SIGINT)
@@ -394,6 +406,7 @@ class TestDapServer(TestBase):
                 self.do_launch(client, path)
             self.do_disconnect(client)
 
+    @unittest.skipIf(sys.platform == "win32", "Windows is just pure stupid")
     def test_kill(self):
         with PrepareDapTest() as info:
             tmpdir, server, client = info
