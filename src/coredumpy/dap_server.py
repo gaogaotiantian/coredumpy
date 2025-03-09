@@ -46,7 +46,7 @@ class DebugAdapterServer:
                 except socket.timeout:
                     self.update_client_threads()
                     continue
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 if self.running:
                     print(f"Error in server loop: {e}")
                 break
@@ -215,7 +215,7 @@ class DebugAdapterHandler(threading.Thread):
         self.running = False
         try:
             self.client.close()
-        except Exception:
+        except Exception:  # pragma: no cover
             pass
         print("[Client] Client handler closed", flush=True)
 
@@ -301,7 +301,7 @@ class CoredumpyDebugger:
         }
 
     def get_variables(self, variables_reference: int) -> List[Dict[str, Any]]:
-        if self.container is None:
+        if self.container is None:  # pragma: no cover
             return []
         obj = self.container.get_object(self.real_id_to_id[variables_reference])
 
@@ -338,7 +338,5 @@ def run_server():
 
     try:
         server.start()
-    except KeyboardInterrupt:
-        pass
     except Exception as e:  # pragma: no cover
         print(f"Unexpected error: {e}")

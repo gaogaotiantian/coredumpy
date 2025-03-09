@@ -361,6 +361,10 @@ class TestDapServer(TestBase):
             scopes = self.do_scope(client, frame_id)
             self.assertEqual(len(scopes), 2)
 
+            # non exist frame id
+            should_be_empty_scopes = self.do_scope(client, frame_id + 12345678)
+            self.assertEqual(len(should_be_empty_scopes), 0)
+
             local_variables = self.do_variables(client, scopes[0]["variablesReference"])
             variable_names = set(var["name"] for var in local_variables)
             self.assertEqual(variable_names, {"arg", "p", "d"})
@@ -368,6 +372,9 @@ class TestDapServer(TestBase):
             for var in local_variables:
                 variable = self.do_variables(client, var["variablesReference"])
                 self.assertGreaterEqual(len(variable), 0)
+                _ = self.do_variables(client, variable[0]["variablesReference"])
+
+            self.do_nonexist(client)
 
             self.do_disconnect(client)
 
