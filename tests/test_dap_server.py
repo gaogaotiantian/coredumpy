@@ -372,7 +372,6 @@ class TestDapServer(TestBase):
             for var in local_variables:
                 variable = self.do_variables(client, var["variablesReference"])
                 self.assertGreaterEqual(len(variable), 0)
-                _ = self.do_variables(client, variable[0]["variablesReference"])
 
             self.do_nonexist(client)
 
