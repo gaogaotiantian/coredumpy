@@ -21,7 +21,6 @@ class DapServer:
         self._process = None
 
     def __enter__(self):
-        # Coveragepy on Windows seems to be able to deadlock PIPE
         self._process = subprocess.Popen(
             normalize_commands(["coredumpy", "host"]),
             stdin=subprocess.DEVNULL,
