@@ -21,23 +21,17 @@ class DapServer:
         self._process = None
 
     def __enter__(self):
+        # Coveragepy on Windows seems to be able to deadlock PIPE
         self._process = subprocess.Popen(
             normalize_commands(["coredumpy", "host"]),
             stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
         )
-
-        line = self._process.stdout.readline()
-        line = self._process.stdout.readline()
-        if b"listening for connections" not in line:
-            raise RuntimeError("Failed to start DAP server")
-
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._process:
-            self._process.stdout.close()
             self._process.terminate()
             self._process.wait()
             self._process = None
@@ -48,6 +42,7 @@ class DapClient:
         self.host = "localhost"
         self.port = 6742
         self.seq = 1
+        self.message_gen = None
 
     def __enter__(self):
         self.sock = socket.create_connection((self.host, self.port))
@@ -98,6 +93,11 @@ class DapClient:
                     print("Failed to decode JSON message:", e)
                 # Remove the processed message from the buffer.
                 buffer = rest[content_length:]
+
+    def get_message(self):
+        if self.message_gen is None:
+            self.message_gen = self.receive_messages()
+        return next(self.message_gen)
 
     def send_initialize(self):
         """Send an 'initialize' request to the DAP server."""
@@ -226,54 +226,47 @@ class PrepareDapTest(TestBase):
 class TestDapServer(TestBase):
     def do_initialize(self, client: DapClient):
         client.send_initialize()
-        message_gen = client.receive_messages()
-        message = next(message_gen)
+        message = client.get_message()
         self.assertTrue(message["success"])
-        message = next(message_gen)
+        message = client.get_message()
         self.assertEqual(message["event"], "initialized")
 
     def do_launch(self, client: DapClient, path):
         client.send_launch(path)
-        message_gen = client.receive_messages()
-        message = next(message_gen)
+        message = client.get_message()
         self.assertTrue(message["success"])
-        message = next(message_gen)
+        message = client.get_message()
         self.assertEqual(message["event"], "stopped")
 
     def do_stack_trace(self, client: DapClient):
         client.send_stack_trace()
-        message_gen = client.receive_messages()
-        message = next(message_gen)
+        message = client.get_message()
         self.assertTrue(message["success"])
         return message["body"]["stackFrames"]
 
     def do_source(self, client: DapClient, source_reference):
         client.send_source(source_reference)
-        message_gen = client.receive_messages()
-        message = next(message_gen)
+        message = client.get_message()
         self.assertTrue(message["success"])
         return message["body"]["content"]
 
     def do_scope(self, client: DapClient, frame_id):
         client.send_scope(frame_id)
-        message_gen = client.receive_messages()
-        message = next(message_gen)
+        message = client.get_message()
         self.assertTrue(message["success"])
         return message["body"]["scopes"]
 
     def do_variables(self, client: DapClient, variables_reference):
         client.send_variables(variables_reference)
-        message_gen = client.receive_messages()
-        message = next(message_gen)
+        message = client.get_message()
         self.assertTrue(message["success"])
         return message["body"]["variables"]
 
     def do_disconnect(self, client: DapClient):
         client.send_disconnect()
-        message_gen = client.receive_messages()
-        message = next(message_gen)
+        message = client.get_message()
         self.assertTrue(message["success"])
-        message = next(message_gen)
+        message = client.get_message()
         self.assertEqual(message["event"], "exited")
         return message["body"]["exitCode"]
 
