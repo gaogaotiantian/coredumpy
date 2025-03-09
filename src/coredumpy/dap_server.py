@@ -4,7 +4,6 @@
 import json
 import signal
 import socket
-import sys
 import threading
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -30,7 +29,7 @@ class DebugAdapterServer:
             print(f"[Server] Debug adapter server successfully bound to {self.host}:{self.port}", flush=True)
             print("[Server] Server socket created and listening for connections", flush=True)
             print("[Server] Press Ctrl+C to exit", flush=True)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             print(f"[Server] Error binding server: {e}", flush=True)
             return
 
@@ -65,12 +64,12 @@ class DebugAdapterServer:
         for thread in self.client_threads[:]:
             try:
                 thread.close()
-            except Exception:
+            except Exception:  # pragma: no cover
                 pass
 
         try:
             self.server.close()
-        except Exception:
+        except Exception:  # pragma: no cover
             pass
 
 
@@ -110,14 +109,14 @@ class DebugAdapterHandler(threading.Thread):
                             break
                 except socket.timeout:
                     continue
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 if self.running:
                     print(f"Error handling client: {e}")
                 break
 
         try:
             self.client.close()
-        except Exception:
+        except Exception:  # pragma: no cover
             pass
 
     def process_message(self, message: Dict[str, Any]):
@@ -311,10 +310,10 @@ class CoredumpyDebugger:
         if isinstance(obj, dict):
             it = obj.items()
         elif isinstance(obj, PyObjectProxy):
-            it = {attr: getattr(obj, attr) for attr in dir(obj)}
+            it = {attr: getattr(obj, attr) for attr in dir(obj)}.items()
         elif isinstance(obj, (set, frozenset, list, tuple)):
             it = enumerate(obj)
-        else:
+        else:  # pragma: no cover
             print("unexpected type", type(obj))
             return []
 
@@ -341,10 +340,5 @@ def run_server():
         server.start()
     except KeyboardInterrupt:
         pass
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         print(f"Unexpected error: {e}")
-
-
-if __name__ == '__main__':
-    run_server()
-    sys.exit(0)

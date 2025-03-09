@@ -4,6 +4,7 @@
 import json
 import os
 import re
+import signal
 import socket
 import subprocess
 import tempfile
@@ -42,6 +43,12 @@ class DapServer:
             self._process.wait()
             self._process.stdout.close()
             self._process = None
+
+    def kill(self):
+        self._process.send_signal(signal.SIGINT)
+        self._process.wait()
+        self._process.stdout.close()
+        self._process = None
 
 
 class DapClient:
@@ -144,6 +151,15 @@ class DapClient:
         }
         self.send_message(launch_request)
 
+    def send_threads(self):
+        """Send a 'threads' request to the DAP server."""
+        threads_request = {
+            "type": "request",
+            "seq": self.seq,
+            "command": "threads"
+        }
+        self.send_message(threads_request)
+
     def send_stack_trace(self):
         """Send a 'stackTrace' request to the DAP server."""
         stack_trace_request = {
@@ -206,6 +222,15 @@ class DapClient:
         }
         self.send_message(disconnect_request)
 
+    def send_nonexist(self):
+        """Send a non-existent request to the DAP server."""
+        nonexist_request = {
+            "type": "request",
+            "seq": self.seq,
+            "command": "nonexist"
+        }
+        self.send_message(nonexist_request)
+
 
 class PrepareDapTest(TestBase):
     def __init__(self):
@@ -245,6 +270,12 @@ class TestDapServer(TestBase):
         message = client.get_message()
         self.assertEqual(message["event"], "stopped")
 
+    def do_threads(self, client: DapClient):
+        client.send_threads()
+        message = client.get_message()
+        self.assertTrue(message["success"])
+        return message["body"]["threads"]
+
     def do_stack_trace(self, client: DapClient):
         client.send_stack_trace()
         message = client.get_message()
@@ -277,6 +308,11 @@ class TestDapServer(TestBase):
         self.assertEqual(message["event"], "exited")
         return message["body"]["exitCode"]
 
+    def do_nonexist(self, client: DapClient):
+        client.send_nonexist()
+        message = client.get_message()
+        self.assertTrue(message["success"])
+
     def test_run(self):
         with PrepareDapTest() as info:
             tmpdir, server, client = info
@@ -300,6 +336,7 @@ class TestDapServer(TestBase):
             self.run_script(script)
             self.do_initialize(client)
             self.do_launch(client, path)
+            self.do_threads(client)
             stack_frames = self.do_stack_trace(client)
             self.assertGreaterEqual(len(stack_frames), 3)
             self.assertEqual(stack_frames[0]["name"], "g")
@@ -316,4 +353,59 @@ class TestDapServer(TestBase):
             variable_names = set(var["name"] for var in local_variables)
             self.assertEqual(variable_names, {"arg", "p", "d"})
 
+            for var in local_variables:
+                variable = self.do_variables(client, var["variablesReference"])
+                self.assertGreaterEqual(len(variable), 0)
+
             self.do_disconnect(client)
+
+    def test_run_without_launch(self):
+        # Make sure the server does not crash if we don't send a launch request
+        with PrepareDapTest() as info:
+            tmpdir, server, client = info
+            path = f"{tmpdir}/coredumpy_dump"
+            script = textwrap.dedent(f"""
+                import coredumpy
+                def f():
+                    x = 142857
+                    coredumpy.dump(path={repr(path)})
+                f()
+            """)
+            self.run_script(script)
+            self.do_initialize(client)
+            self.do_threads(client)
+            stack_frames = self.do_stack_trace(client)
+            self.assertEqual(len(stack_frames), 0)
+            source = self.do_source(client, 0)
+            self.assertEqual(source, "")
+            scopes = self.do_scope(client, 0)
+            self.assertEqual(len(scopes), 0)
+            variables = self.do_variables(client, 0)
+            self.assertEqual(len(variables), 0)
+            self.do_disconnect(client)
+
+    def test_launch_invalid_file(self):
+        # Make sure the server does not crash if we send an invalid file
+        with PrepareDapTest() as info:
+            tmpdir, server, client = info
+            path = f"{tmpdir}/invalid_dump"
+            self.do_initialize(client)
+            with self.assertRaises(AssertionError):
+                self.do_launch(client, path)
+            self.do_disconnect(client)
+
+    def test_kill(self):
+        with PrepareDapTest() as info:
+            tmpdir, server, client = info
+            path = f"{tmpdir}/coredumpy_dump"
+            script = textwrap.dedent(f"""
+                import coredumpy
+                def f():
+                    x = 142857
+                    coredumpy.dump(path={repr(path)})
+                f()
+            """)
+            self.run_script(script)
+            self.do_initialize(client)
+            self.do_launch(client, path)
+            server.kill()
