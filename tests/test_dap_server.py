@@ -15,6 +15,7 @@ from .util import normalize_commands
 
 DEBUG_PRINT = os.getenv("GITHUB_ACTIONS", None) is None
 
+
 class DapServer:
     def __init__(self):
         self._process = None
@@ -221,6 +222,7 @@ class PrepareDapTest(TestBase):
         if self._tmpdir:
             self._tmpdir.cleanup()
 
+
 class TestDapServer(TestBase):
     def do_initialize(self, client: DapClient):
         client.send_initialize()
@@ -315,4 +317,3 @@ class TestDapServer(TestBase):
             self.assertEqual(variable_names, {"arg", "p", "d"})
 
             self.do_disconnect(client)
-

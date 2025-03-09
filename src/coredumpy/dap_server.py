@@ -2,14 +2,15 @@
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
 import json
-import socket
-import threading
 import signal
+import socket
 import sys
-from typing import Dict, Any, List
+import threading
+from typing import Any, Dict, Iterable, List, Optional
 
 from .coredumpy import load_data_from_path
 from .py_object_proxy import PyObjectProxy
+from .py_object_container import PyObjectContainer
 from .type_support import is_container
 
 
@@ -19,17 +20,15 @@ class DebugAdapterServer:
         self.port = port
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sequence = 1
-        self.debugger = None
         self.running = True
-        self.clients = []
+        self.client_threads: List[DebugAdapterHandler] = []
 
     def start(self):
         try:
             self.server.bind((self.host, self.port))
             self.server.listen(1)
             print(f"[Server] Debug adapter server successfully bound to {self.host}:{self.port}", flush=True)
-            print(f"[Server] Server socket created and listening for connections", flush=True)
+            print("[Server] Server socket created and listening for connections", flush=True)
             print("[Server] Press Ctrl+C to exit", flush=True)
         except Exception as e:
             print(f"[Server] Error binding server: {e}", flush=True)
@@ -41,12 +40,12 @@ class DebugAdapterServer:
                 try:
                     client, addr = self.server.accept()
                     print(f"[Server] New client connection accepted from {addr}", flush=True)
-                    self.clients.append(client)
-                    client_thread = threading.Thread(target=self.handle_client, args=(client,))
-                    client_thread.daemon = True
+                    client_thread = DebugAdapterHandler(self, client)
                     client_thread.start()
+                    self.client_threads.append(client_thread)
                     print(f"[Server] Started client handler thread for {addr}", flush=True)
                 except socket.timeout:
+                    self.update_client_threads()
                     continue
             except Exception as e:
                 if self.running:
@@ -55,14 +54,42 @@ class DebugAdapterServer:
 
         self.shutdown()
 
-    def handle_client(self, client: socket.socket):
+    def update_client_threads(self):
+        for client_thread in self.client_threads[:]:
+            if not client_thread.is_alive():
+                self.client_threads.remove(client_thread)
+
+    def shutdown(self):
+        self.running = False
+
+        for thread in self.client_threads[:]:
+            try:
+                thread.close()
+            except Exception:
+                pass
+
+        try:
+            self.server.close()
+        except Exception:
+            pass
+
+
+class DebugAdapterHandler(threading.Thread):
+    def __init__(self, server: DebugAdapterServer, client: socket.socket):
+        super().__init__(daemon=True)
+        self.client = client
+        self.running = True
+        self.sequence = 1
+        self.debugger: Optional[CoredumpyDebugger] = None
+
+    def run(self):
         print("[Client] Client handler started", flush=True)
         buffer = ""
         while self.running:
             try:
-                client.settimeout(0.5)
+                self.client.settimeout(0.5)
                 try:
-                    data = client.recv(4096).decode('utf-8')
+                    data = self.client.recv(4096).decode('utf-8')
                     if not data:
                         break
 
@@ -74,11 +101,11 @@ class DebugAdapterServer:
                         for line in header.split('\r\n'):
                             if line.startswith('Content-Length: '):
                                 content_length = int(line.split(': ')[1])
-                        
+
                         if len(rest) >= content_length:
                             content = rest[:content_length]
                             buffer = rest[content_length:]
-                            self.process_message(client, json.loads(content))
+                            self.process_message(json.loads(content))
                         else:
                             break
                 except socket.timeout:
@@ -88,80 +115,78 @@ class DebugAdapterServer:
                     print(f"Error handling client: {e}")
                 break
 
-        if client in self.clients:
-            self.clients.remove(client)
         try:
-            client.close()
-        except:
+            self.client.close()
+        except Exception:
             pass
 
-    def process_message(self, client: socket.socket, message: Dict[str, Any]):
+    def process_message(self, message: Dict[str, Any]):
         try:
             print("[Client] Processing message:", message, flush=True)
             if message.get('type') == 'request':
                 command = message.get('command')
                 if command == 'initialize':
                     # We don't really support anything
-                    self.send_response(client, message, {})
-                    self.send_event(client, 'initialized', {})
+                    self.send_response(message, {})
+                    self.send_event('initialized', {})
                 elif command == 'launch':
                     program = message.get('arguments', {}).get('program', '')
                     if program:
                         self.debugger = CoredumpyDebugger(program)
                         self.debugger.start()
-                    self.send_response(client, message, {})
-                    self.send_event(client, 'stopped', {'reason': 'entry', 'threadId': 1})
+                    self.send_response(message, {})
+                    self.send_event('stopped', {'reason': 'entry', 'threadId': 1})
                 elif command == 'threads':
-                    self.send_response(client, message, {'threads': [{'id': 1, 'name': 'Thread 1'}]})
+                    self.send_response(message, {'threads': [{'id': 1, 'name': 'Thread 1'}]})
                 elif command == 'stackTrace':
                     if self.debugger:
                         stack_frames = self.debugger.get_stack_trace()
                     else:
                         stack_frames = []
-                    self.send_response(client, message, {'stackFrames': stack_frames, 'totalFrames': len(stack_frames)})
+                    self.send_response(message, {'stackFrames': stack_frames, 'totalFrames': len(stack_frames)})
                 elif command == 'source':
                     source_reference = message.get('arguments', {}).get('sourceReference', 0)
                     if self.debugger:
                         source = self.debugger.get_source(source_reference)
                     else:
-                        source = {}
-                    self.send_response(client, message, {'content': source, 'mimeType': 'text/x-python'})
+                        source = ""
+                    self.send_response(message, {'content': source, 'mimeType': 'text/x-python'})
                 elif command == 'scopes':
                     frame_id = message.get('arguments', {}).get('frameId', 0)
                     if self.debugger:
                         scopes = self.debugger.get_scopes(frame_id)
                     else:
                         scopes = []
-                    self.send_response(client, message, {'scopes': scopes})
+                    self.send_response(message, {'scopes': scopes})
                 elif command == 'variables':
                     variables_reference = message.get('arguments', {}).get('variablesReference', 0)
                     if self.debugger:
                         variables = self.debugger.get_variables(variables_reference)
                     else:
                         variables = []
-                    self.send_response(client, message, {'variables': variables})
+                    self.send_response(message, {'variables': variables})
                 elif command == 'disconnect':
                     if self.debugger:
                         self.debugger.stop()
                         self.debugger = None
-                    self.send_response(client, message, {})
-                    self.send_event(client, 'exited', {'exitCode': 0})
+                    self.send_response(message, {})
+                    self.send_event('exited', {'exitCode': 0})
                     self.running = False
                 else:
-                    self.send_response(client, message, {})
+                    self.send_response(message, {})
 
         except Exception as e:
-            self.send_error_response(client, message, str(e))
+            self.send_error_response(message, str(e))
 
-    def send_message(self, client: socket.socket, message: Dict[str, Any]):
+    def send_message(self, message: Dict[str, Any]):
         print("[Client] Sending message:", message, flush=True)
         content = json.dumps(message)
         header = f"Content-Length: {len(content)}\r\n\r\n"
-        client.send(header.encode('utf-8'))
-        client.send(content.encode('utf-8'))
+        self.client.send(header.encode('utf-8'))
+        self.client.send(content.encode('utf-8'))
 
-    def send_response(self, client: socket.socket, request: Dict[str, Any], body: Dict[str, Any]):
-        self.send_message(client, {
+    def send_response(self, request: Dict[str, Any], body: Dict[str, Any]):
+        self.send_message({
             'type': 'response',
             'request_seq': request.get('seq', 0),
             'success': True,
@@ -169,8 +194,8 @@ class DebugAdapterServer:
             'body': body
         })
 
-    def send_error_response(self, client: socket.socket, request: Dict[str, Any], message: str):
-        self.send_message(client, {
+    def send_error_response(self, request: Dict[str, Any], message: str):
+        self.send_message({
             'type': 'response',
             'request_seq': request.get('seq', 0),
             'success': False,
@@ -178,8 +203,8 @@ class DebugAdapterServer:
             'message': message
         })
 
-    def send_event(self, client: socket.socket, event: str, body: Dict[str, Any]):
-        self.send_message(client, {
+    def send_event(self, event: str, body: Dict[str, Any]):
+        self.send_message({
             'type': 'event',
             'event': event,
             'seq': self.sequence,
@@ -187,24 +212,13 @@ class DebugAdapterServer:
         })
         self.sequence += 1
 
-    def shutdown(self):
+    def close(self):
         self.running = False
-        
-        for client in self.clients[:]:
-            try:
-                client.close()
-            except:
-                pass
-        self.clients.clear()
-        
         try:
-            self.server.close()
-        except:
+            self.client.close()
+        except Exception:
             pass
-        
-        if self.debugger:
-            self.debugger.stop()
-            self.debugger = None
+        print("[Client] Client handler closed", flush=True)
 
 
 class CoredumpyDebugger:
@@ -213,16 +227,14 @@ class CoredumpyDebugger:
         self.process = None
         self.current_line = 0
         self.current_file = ''
-        self.variables = {}
-        self.stack_frames = []
-        self.container = None
+        self.container: Optional[PyObjectContainer] = None
         self.frame = None
-        self.files = {}
-        self.sid_to_file = {}
-        self.file_to_sid = {}
-        self.fid_to_frame = {}
-        self.frame_stack = []
-        self.real_id_to_id = {}
+        self.files: Dict[str, str] = {}
+        self.sid_to_file: Dict[int, str] = {}
+        self.file_to_sid: Dict[str, int] = {}
+        self.fid_to_frame: Dict[int, Any] = {}
+        self.frame_stack: List[Dict] = []
+        self.real_id_to_id: Dict[int, str] = {}
 
     def start(self):
         self.container, self.frame, self.files = load_data_from_path(self.path)
@@ -275,7 +287,7 @@ class CoredumpyDebugger:
                 'expensive': False
             }
         ]
-    
+
     def get_variable(self, name, variable) -> Dict[str, Any]:
         if isinstance(variable, PyObjectProxy) or is_container(type(variable)):
             variables_reference = id(variable)
@@ -295,6 +307,7 @@ class CoredumpyDebugger:
         obj = self.container.get_object(self.real_id_to_id[variables_reference])
 
         variables = []
+        it: Iterable
         if isinstance(obj, dict):
             it = obj.items()
         elif isinstance(obj, PyObjectProxy):
@@ -304,7 +317,7 @@ class CoredumpyDebugger:
         else:
             print("unexpected type", type(obj))
             return []
-        
+
         for key, value in it:
             variables.append(self.get_variable(key, value))
 
@@ -316,20 +329,21 @@ class CoredumpyDebugger:
 
 def run_server():
     server = DebugAdapterServer()
-    
+
     def signal_handler(sig, frame):
         print("\nReceived Ctrl+C, shutting down...")
         server.running = False
-    
+
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-    
+
     try:
         server.start()
     except KeyboardInterrupt:
         pass
     except Exception as e:
         print(f"Unexpected error: {e}")
+
 
 if __name__ == '__main__':
     run_server()
