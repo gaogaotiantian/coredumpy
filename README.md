@@ -5,7 +5,7 @@
 coredumpy saves your crash site for post-mortem debugging.
 
 <p align="center">
-    <img src="https://github.com/gaogaotiantian/coredumpy-vscode/raw/master/img/showcase.gif" />
+    <img src="img/showcase.gif" />
 </p>
 
 
