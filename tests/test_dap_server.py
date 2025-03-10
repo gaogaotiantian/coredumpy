@@ -234,12 +234,15 @@ class DapClient:
         }
         self.send_message(disconnect_request)
 
-    def send_nonexist(self):
+    def send_nonexist(self, args=None):
         """Send a non-existent request to the DAP server."""
+        if args is None:
+            args = {}
         nonexist_request = {
             "type": "request",
             "seq": self.seq,
-            "command": "nonexist"
+            "command": "nonexist",
+            "arguments": args
         }
         self.send_message(nonexist_request)
 
@@ -320,15 +323,17 @@ class TestDapServer(TestBase):
         self.assertEqual(message["event"], "exited")
         return message["body"]["exitCode"]
 
-    def do_nonexist(self, client: DapClient):
-        client.send_nonexist()
+    def do_nonexist(self, client: DapClient, args=None):
+        if args is None:
+            args = {}
+        client.send_nonexist(args=args)
         message = client.get_message()
         self.assertTrue(message["success"])
 
     def test_run(self):
         with PrepareDapTest() as info:
             tmpdir, server, client = info
-            path = f"{tmpdir}/coredumpy_dump"
+            path = os.path.join(tmpdir, "coredumpy_dump")
             script = textwrap.dedent(f"""
                 import coredumpy
                 class Person:
@@ -375,13 +380,15 @@ class TestDapServer(TestBase):
 
             self.do_nonexist(client)
 
+            self.do_nonexist(client, args={"very long arg": "test_string" * 1000})
+
             self.do_disconnect(client)
 
     def test_run_without_launch(self):
         # Make sure the server does not crash if we don't send a launch request
         with PrepareDapTest() as info:
             tmpdir, server, client = info
-            path = f"{tmpdir}/coredumpy_dump"
+            path = os.path.join(tmpdir, "coredumpy_dump")
             script = textwrap.dedent(f"""
                 import coredumpy
                 def f():
@@ -406,7 +413,7 @@ class TestDapServer(TestBase):
         # Make sure the server does not crash if we send an invalid file
         with PrepareDapTest() as info:
             tmpdir, server, client = info
-            path = f"{tmpdir}/invalid_dump"
+            path = os.path.join(tmpdir, "invalid_dump")
             self.do_initialize(client)
             with self.assertRaises(AssertionError):
                 self.do_launch(client, path)
@@ -416,7 +423,7 @@ class TestDapServer(TestBase):
     def test_kill(self):
         with PrepareDapTest() as info:
             tmpdir, server, client = info
-            path = f"{tmpdir}/coredumpy_dump"
+            path = os.path.join(tmpdir, "coredumpy_dump")
             script = textwrap.dedent(f"""
                 import coredumpy
                 def f():
@@ -428,3 +435,21 @@ class TestDapServer(TestBase):
             self.do_initialize(client)
             self.do_launch(client, path)
             server.kill()
+
+    def test_kill_client(self):
+        # Make sure the server does not crash if we stop the client
+        with PrepareDapTest() as info:
+            tmpdir, server, client = info
+            path = os.path.join(tmpdir, "coredumpy_dump")
+            script = textwrap.dedent(f"""
+                import coredumpy
+                def f():
+                    x = 142857
+                    coredumpy.dump(path={repr(path)})
+                f()
+            """)
+            self.run_script(script)
+            self.do_initialize(client)
+            self.do_launch(client, path)
+            client.sock.close()
+            client.sock = None
