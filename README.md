@@ -1,15 +1,20 @@
 # coredumpy
 
-[![build](https://github.com/gaogaotiantian/coredumpy/actions/workflows/build_test.yaml/badge.svg)](https://github.com/gaogaotiantian/coredumpy/actions/workflows/build_test.yaml)  [![coverage](https://img.shields.io/codecov/c/github/gaogaotiantian/coredumpy)](https://codecov.io/gh/gaogaotiantian/coredumpy)  [![pypi](https://img.shields.io/pypi/v/coredumpy.svg)](https://pypi.org/project/coredumpy/)  [![support-version](https://img.shields.io/pypi/pyversions/coredumpy)](https://img.shields.io/pypi/pyversions/coredumpy)  [![sponsor](https://img.shields.io/badge/%E2%9D%A4-Sponsor%20me-%23c96198?style=flat&logo=GitHub)](https://github.com/sponsors/gaogaotiantian)
+[![build](https://github.com/gaogaotiantian/coredumpy/actions/workflows/build_test.yaml/badge.svg)](https://github.com/gaogaotiantian/coredumpy/actions/workflows/build_test.yaml)  [![coverage](https://img.shields.io/codecov/c/github/gaogaotiantian/coredumpy)](https://codecov.io/gh/gaogaotiantian/coredumpy)  [![pypi](https://img.shields.io/pypi/v/coredumpy.svg)](https://pypi.org/project/coredumpy/)  [![support-version](https://img.shields.io/pypi/pyversions/coredumpy)](https://img.shields.io/pypi/pyversions/coredumpy)  ![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/gaogaotiantian.coredumpy-vscode)  [![sponsor](https://img.shields.io/badge/%E2%9D%A4-Sponsor%20me-%23c96198?style=flat&logo=GitHub)](https://github.com/sponsors/gaogaotiantian)
 
 coredumpy saves your crash site for post-mortem debugging.
+
+<p align="center">
+    <img src="https://github.com/gaogaotiantian/coredumpy-vscode/raw/master/img/showcase.gif" />
+</p>
+
 
 ## Highlights
 
 * Easy to use
 * Native support for unittest, pytest and run-time exceptions
 * Portable and safe dump
-* Utilizes pdb interface
+* Support VSCode and pdb interface
 
 ## Usage
 
@@ -89,6 +94,11 @@ you actually need), you can use `peek` command.
 coredumpy peek <your_dump_directory>
 coredumpy peek <your_dump_file1> <your_dump_file2>
 ```
+
+### VSCode Extension
+
+Download the [VSCode Extension](https://marketplace.visualstudio.com/items?itemName=gaogaotiantian.coredumpy-vscode)
+and right click your dump file - choose "Load with coredumpy".
 
 ## Type support
 
