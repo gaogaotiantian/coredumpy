@@ -5,7 +5,7 @@
 import argparse
 import os
 
-from .coredumpy import load, peek, run
+from .coredumpy import load, peek, run, host
 
 
 def main():
@@ -23,6 +23,8 @@ def main():
 
     subparsers_peek = subparsers.add_parser("peek", help="Peek a dump file.")
     subparsers_peek.add_argument("files", help="The dump file to load.", nargs="+")
+
+    subparsers_peek = subparsers.add_parser("host", help="Host a DAP server.")
 
     args = parser.parse_args()
 
@@ -50,3 +52,5 @@ def main():
                 print(f"File {file} not found.")
     elif args.command == "run":
         run(args)
+    elif args.command == "host":
+        host()

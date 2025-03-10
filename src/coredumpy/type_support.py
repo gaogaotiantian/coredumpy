@@ -135,3 +135,10 @@ class TypeSupportManager:
         for attr, val in data.get("attrs", {}).items():
             setattr(obj, attr, val)
         return obj, None
+
+
+def is_container(t):
+    support = TypeSupportManager._encoders.get(t)
+    if isinstance(support, type):
+        return issubclass(support, TypeSupportContainerBase)
+    return False

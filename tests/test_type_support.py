@@ -6,7 +6,7 @@ import sys
 
 from coredumpy.py_object_container import PyObjectContainer
 from coredumpy.py_object_proxy import _unknown
-from coredumpy.type_support import TypeSupportBase
+from coredumpy.type_support import is_container, TypeSupportBase
 
 from .base import TestBase
 
@@ -141,6 +141,9 @@ class TestTypeSupport(TestBase):
         container.add_object(1)
         import decimal
         d = decimal.Decimal('3.14')
+        # decimal.Decimal is not loaded yet
+        self.assertFalse(is_container(decimal.Decimal))
+
         container.add_object(d)
         container.load_objects(container.get_objects())
         self.assertIsInstance(container._proxies[str(id(d))], decimal.Decimal)

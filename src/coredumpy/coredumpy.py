@@ -210,7 +210,7 @@ class Coredumpy:
         return ret
 
     @classmethod
-    def load(cls, path: str):
+    def load_data_from_path(cls, path: str):
         if path.endswith(".json"):
             file_open = open
         else:
@@ -223,13 +223,21 @@ class Coredumpy:
         if data["metadata"]["version"] != __version__:  # pragma: no cover
             print(f"Warning! the dump file is created by {data['metadata']['version']}\n"
                   f"but the current coredumpy version is {__version__}")
+
         patch_all()
-        for filename, lines in data["files"].items():
-            linecache.cache[filename] = (len(lines), None, lines, filename)
 
         container = PyObjectContainer()
         container.load_objects(data["objects"])
         frame = container.get_object(data["frame"])
+
+        return container, frame, data["files"]
+
+    @classmethod
+    def load(cls, path: str):
+        container, frame, files = cls.load_data_from_path(path)
+        for filename, lines in files.items():
+            linecache.cache[filename] = (len(lines), None, lines, filename)
+
         pdb_instance = pdb.Pdb()
         pdb_instance.reset()
         pdb_instance.interaction(frame, None)
@@ -290,6 +298,11 @@ class Coredumpy:
         exec(cmd, __main__.__dict__, __main__.__dict__)
 
     @classmethod
+    def host(cls):
+        from .dap_server import run_server
+        run_server()
+
+    @classmethod
     def get_metadata(cls):
         from coredumpy import __version__
         uname = platform.uname()
@@ -308,5 +321,7 @@ class Coredumpy:
 dump = Coredumpy.dump
 dumps = Coredumpy.dumps
 load = Coredumpy.load
+load_data_from_path = Coredumpy.load_data_from_path
 peek = Coredumpy.peek
 run = Coredumpy.run
+host = Coredumpy.host
