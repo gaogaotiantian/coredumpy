@@ -399,12 +399,15 @@ class TestDapServer(TestBase):
 
             # Let's do some eval / exec
             self.assertEqual(self.do_evaluate(client, frame_id, "d['age']"), "30")
-            self.assertIn("not defined", self.do_evaluate(client, frame_id, "k"))
+            self.assertIn("NameError", self.do_evaluate(client, frame_id, "k"))
             self.do_evaluate(client, frame_id, "k = 5")
             self.assertEqual(self.do_evaluate(client, frame_id, "k"), "5")
             self.assertEqual(self.do_evaluate(client, frame_id, "p.name"), "Alice")
             self.do_evaluate(client, frame_id, "p.name = 'Bob'")
             self.assertEqual(self.do_evaluate(client, frame_id, "p.name"), "Bob")
+            self.assertIn("SyntaxError", self.do_evaluate(client, frame_id, "p.name ="))
+            # eval with wrong frame id
+            self.assertEqual(self.do_evaluate(client, frame_id + 12345678, "p.name"), "")
 
             self.do_nonexist(client)
 
@@ -435,6 +438,7 @@ class TestDapServer(TestBase):
             self.assertEqual(len(scopes), 0)
             variables = self.do_variables(client, 0)
             self.assertEqual(len(variables), 0)
+            self.assertEqual(self.do_evaluate(client, 0, "x"), "")
             self.do_disconnect(client)
 
     def test_launch_invalid_file(self):

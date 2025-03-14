@@ -5,6 +5,7 @@ import json
 import signal
 import socket
 import threading
+import traceback
 from typing import Any, Dict, Iterable, List, Optional
 
 from .coredumpy import load_data_from_path
@@ -344,9 +345,9 @@ class CoredumpyDebugger:
             try:
                 exec(expression, f_globals, f_locals)
             except Exception as e:
-                return str(e)
+                return "".join(traceback.format_exception_only(e))
         except Exception as e:
-            return str(e)
+            return "".join(traceback.format_exception_only(e))
 
         return ""
 
