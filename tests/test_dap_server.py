@@ -222,6 +222,19 @@ class DapClient:
         }
         self.send_message(variables_request)
 
+    def send_evaluate(self, frame_id, expression):
+        """Send an 'evaluate' request to the DAP server."""
+        evaluate_request = {
+            "type": "request",
+            "seq": self.seq,
+            "command": "evaluate",
+            "arguments": {
+                "frameId": frame_id,
+                "expression": expression
+            }
+        }
+        self.send_message(evaluate_request)
+
     def send_disconnect(self):
         """Send a 'disconnect' request to the DAP server."""
         disconnect_request = {
@@ -315,6 +328,12 @@ class TestDapServer(TestBase):
         self.assertTrue(message["success"])
         return message["body"]["variables"]
 
+    def do_evaluate(self, client: DapClient, frame_id, expression):
+        client.send_evaluate(frame_id, expression)
+        message = client.get_message()
+        self.assertTrue(message["success"])
+        return message["body"]["result"]
+
     def do_disconnect(self, client: DapClient):
         client.send_disconnect()
         message = client.get_message()
@@ -377,6 +396,15 @@ class TestDapServer(TestBase):
             for var in local_variables:
                 variable = self.do_variables(client, var["variablesReference"])
                 self.assertGreaterEqual(len(variable), 0)
+
+            # Let's do some eval / exec
+            self.assertEqual(self.do_evaluate(client, frame_id, "d['age']"), "30")
+            self.assertIn("not defined", self.do_evaluate(client, frame_id, "k"))
+            self.do_evaluate(client, frame_id, "k = 5")
+            self.assertEqual(self.do_evaluate(client, frame_id, "k"), "5")
+            self.assertEqual(self.do_evaluate(client, frame_id, "p.name"), "Alice")
+            self.do_evaluate(client, frame_id, "p.name = 'Bob'")
+            self.assertEqual(self.do_evaluate(client, frame_id, "p.name"), "Bob")
 
             self.do_nonexist(client)
 
