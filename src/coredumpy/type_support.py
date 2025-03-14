@@ -133,7 +133,7 @@ class TypeSupportManager:
         obj = PyObjectProxy()
         obj._coredumpy_type = data["type"]
         for attr, val in data.get("attrs", {}).items():
-            setattr(obj, attr, val)
+            obj.set_coredumpy_attr(attr, val)
         return obj, None
 
 

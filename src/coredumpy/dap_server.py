@@ -4,7 +4,9 @@
 import json
 import signal
 import socket
+import sys
 import threading
+import traceback
 from typing import Any, Dict, Iterable, List, Optional
 
 from .coredumpy import load_data_from_path
@@ -164,6 +166,14 @@ class DebugAdapterHandler(threading.Thread):
                     else:
                         variables = []
                     self.send_response(message, {'variables': variables})
+                elif command == 'evaluate':
+                    frame_id = message.get('arguments', {}).get('frameId', 0)
+                    expression = message.get('arguments', {}).get('expression', '')
+                    if self.debugger:
+                        result = self.debugger.get_evaluate(frame_id, expression)
+                    else:
+                        result = ""
+                    self.send_response(message, {'result': result, 'variablesReference': 0})
                 elif command == 'disconnect':
                     if self.debugger:
                         self.debugger.stop()
@@ -321,6 +331,32 @@ class CoredumpyDebugger:
             variables.append(self.get_variable(key, value))
 
         return variables
+
+    def get_evaluate(self, frame_id: int, expression: str) -> str:
+        frame = self.fid_to_frame.get(frame_id)
+        if not frame:
+            return ""
+
+        f_locals = frame.f_locals
+        f_globals = frame.f_globals
+
+        try:
+            return str(eval(expression, f_globals, f_locals))
+        except SyntaxError:
+            try:
+                exec(expression, f_globals, f_locals)
+            except Exception as e:
+                if sys.version_info < (3, 10):
+                    return "".join(traceback.format_exception_only(type(e), e))
+                else:
+                    return "".join(traceback.format_exception_only(e))
+        except Exception as e:
+            if sys.version_info < (3, 10):
+                return "".join(traceback.format_exception_only(type(e), e))
+            else:
+                return "".join(traceback.format_exception_only(e))
+
+        return ""
 
     def stop(self):
         pass

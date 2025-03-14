@@ -222,6 +222,19 @@ class DapClient:
         }
         self.send_message(variables_request)
 
+    def send_evaluate(self, frame_id, expression):
+        """Send an 'evaluate' request to the DAP server."""
+        evaluate_request = {
+            "type": "request",
+            "seq": self.seq,
+            "command": "evaluate",
+            "arguments": {
+                "frameId": frame_id,
+                "expression": expression
+            }
+        }
+        self.send_message(evaluate_request)
+
     def send_disconnect(self):
         """Send a 'disconnect' request to the DAP server."""
         disconnect_request = {
@@ -315,6 +328,12 @@ class TestDapServer(TestBase):
         self.assertTrue(message["success"])
         return message["body"]["variables"]
 
+    def do_evaluate(self, client: DapClient, frame_id, expression):
+        client.send_evaluate(frame_id, expression)
+        message = client.get_message()
+        self.assertTrue(message["success"])
+        return message["body"]["result"]
+
     def do_disconnect(self, client: DapClient):
         client.send_disconnect()
         message = client.get_message()
@@ -378,6 +397,18 @@ class TestDapServer(TestBase):
                 variable = self.do_variables(client, var["variablesReference"])
                 self.assertGreaterEqual(len(variable), 0)
 
+            # Let's do some eval / exec
+            self.assertEqual(self.do_evaluate(client, frame_id, "d['age']"), "30")
+            self.assertIn("NameError", self.do_evaluate(client, frame_id, "k"))
+            self.do_evaluate(client, frame_id, "k = 5")
+            self.assertEqual(self.do_evaluate(client, frame_id, "k"), "5")
+            self.assertEqual(self.do_evaluate(client, frame_id, "p.name"), "Alice")
+            self.do_evaluate(client, frame_id, "p.name = 'Bob'")
+            self.assertEqual(self.do_evaluate(client, frame_id, "p.name"), "Bob")
+            self.assertIn("SyntaxError", self.do_evaluate(client, frame_id, "p.name ="))
+            # eval with wrong frame id
+            self.assertEqual(self.do_evaluate(client, frame_id + 12345678, "p.name"), "")
+
             self.do_nonexist(client)
 
             self.do_nonexist(client, args={"very long arg": "test_string" * 1000})
@@ -407,6 +438,7 @@ class TestDapServer(TestBase):
             self.assertEqual(len(scopes), 0)
             variables = self.do_variables(client, 0)
             self.assertEqual(len(variables), 0)
+            self.assertEqual(self.do_evaluate(client, 0, "x"), "")
             self.do_disconnect(client)
 
     def test_launch_invalid_file(self):
