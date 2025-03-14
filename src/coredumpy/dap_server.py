@@ -4,6 +4,7 @@
 import json
 import signal
 import socket
+import sys
 import threading
 import traceback
 from typing import Any, Dict, Iterable, List, Optional
@@ -345,9 +346,15 @@ class CoredumpyDebugger:
             try:
                 exec(expression, f_globals, f_locals)
             except Exception as e:
-                return "".join(traceback.format_exception_only(e))
+                if sys.version_info < (3, 10):
+                    return "".join(traceback.format_exception_only(type(e), e))
+                else:
+                    return "".join(traceback.format_exception_only(e))
         except Exception as e:
-            return "".join(traceback.format_exception_only(e))
+            if sys.version_info < (3, 10):
+                return "".join(traceback.format_exception_only(type(e), e))
+            else:
+                return "".join(traceback.format_exception_only(e))
 
         return ""
 
