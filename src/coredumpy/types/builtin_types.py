@@ -1,6 +1,7 @@
 # Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
+import builtins
 import importlib
 import sys
 import types
@@ -233,10 +234,28 @@ class FrameLocalsProxySupport(DictSupport):
     @classmethod
     def get_type(cls):
         if sys.version_info < (3, 13):
-            raise NotImplementedError
+            raise NotImplementedError()
         return type(sys._getframe().f_locals), "FrameLocalsProxy"
 
     @classmethod
     def dump(cls, obj):
         obj = dict(obj)
         return DictSupport.dump(obj)
+
+
+class BuiltinFunctionSupport(TypeSupportBase):
+    @classmethod
+    def get_type(cls):
+        return types.BuiltinFunctionType, "builtin_function"
+
+    @classmethod
+    def dump(cls, obj: types.BuiltinFunctionType):
+        if obj in builtins.__dict__.values():
+            return {"type": "builtin_function", "value": obj.__qualname__}, None
+        raise NotImplementedError()
+
+    @classmethod
+    def load(cls, data, objects):
+        if data["value"] in builtins.__dict__:
+            return builtins.__dict__[data["value"]], None
+        raise NotImplementedError()
