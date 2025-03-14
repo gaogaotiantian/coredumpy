@@ -5,7 +5,7 @@ import importlib
 import sys
 
 from coredumpy.py_object_container import PyObjectContainer
-from coredumpy.py_object_proxy import _unknown
+from coredumpy.py_object_proxy import _unknown, PyObjectProxy
 from coredumpy.type_support import is_container, TypeSupportBase
 
 from .base import TestBase
@@ -114,6 +114,15 @@ class TestTypeSupport(TestBase):
     def test_builtin_function(self):
         proxy = self.convert_object(abs)
         self.assertIs(proxy, abs)
+        proxy = self.convert_object(sys.getsizeof)
+        self.assertIsInstance(proxy, PyObjectProxy)
+        import builtins
+        builtins.__dict__["getsizeof"] = sys.getsizeof
+        proxy = self.convert_object(
+            builtins.getsizeof,  # type: ignore
+            before_load=lambda: builtins.__dict__.pop("getsizeof")
+        )
+        self.assertIsInstance(proxy, PyObjectProxy)
 
     def test_nonexist_attr(self):
         class A:

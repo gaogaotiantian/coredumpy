@@ -69,8 +69,10 @@ class TestBase(unittest.TestCase):
         stderr = stderr.decode(errors='backslashreplace')
         return stdout, stderr
 
-    def convert_object(self, obj):
+    def convert_object(self, obj, before_load=None):
         container = PyObjectContainer()
         container.add_object(obj)
+        if before_load:
+            before_load()
         container.load_objects(container.get_objects())
         return container.get_object(str(id(obj)))

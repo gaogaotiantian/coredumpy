@@ -251,7 +251,7 @@ class BuiltinFunctionSupport(TypeSupportBase):
     @classmethod
     def dump(cls, obj: types.BuiltinFunctionType):
         if obj in builtins.__dict__.values():
-            return {"type": "builtin_function", "value": obj.__name__}, None
+            return {"type": "builtin_function", "value": obj.__qualname__}, None
         raise NotImplementedError()
 
     @classmethod
