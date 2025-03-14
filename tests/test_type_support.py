@@ -111,6 +111,10 @@ class TestTypeSupport(TestBase):
         proxy = container.get_object(str(id(temp_module_for_test)))
         self.assertEqual(proxy._coredumpy_type, "module")
 
+    def test_builtin_function(self):
+        proxy = self.convert_object(abs)
+        self.assertIs(proxy, abs)
+
     def test_nonexist_attr(self):
         class A:
             def __init__(self, x):
