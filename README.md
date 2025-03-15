@@ -1,6 +1,11 @@
 # coredumpy
 
-[![build](https://github.com/gaogaotiantian/coredumpy/actions/workflows/build_test.yaml/badge.svg)](https://github.com/gaogaotiantian/coredumpy/actions/workflows/build_test.yaml)  [![coverage](https://img.shields.io/codecov/c/github/gaogaotiantian/coredumpy)](https://codecov.io/gh/gaogaotiantian/coredumpy)  [![pypi](https://img.shields.io/pypi/v/coredumpy.svg)](https://pypi.org/project/coredumpy/)  [![support-version](https://img.shields.io/pypi/pyversions/coredumpy)](https://img.shields.io/pypi/pyversions/coredumpy)  ![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/gaogaotiantian.coredumpy-vscode)  [![sponsor](https://img.shields.io/badge/%E2%9D%A4-Sponsor%20me-%23c96198?style=flat&logo=GitHub)](https://github.com/sponsors/gaogaotiantian)
+[![build](https://github.com/gaogaotiantian/coredumpy/actions/workflows/build_test.yaml/badge.svg)](https://github.com/gaogaotiantian/coredumpy/actions/workflows/build_test.yaml)
+[![coverage](https://img.shields.io/codecov/c/github/gaogaotiantian/coredumpy)](https://codecov.io/gh/gaogaotiantian/coredumpy)
+[![pypi](https://img.shields.io/pypi/v/coredumpy.svg)](https://pypi.org/project/coredumpy/)
+[![support-version](https://img.shields.io/pypi/pyversions/coredumpy)](https://img.shields.io/pypi/pyversions/coredumpy)
+[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/gaogaotiantian.coredumpy-vscode)](https://marketplace.visualstudio.com/items?itemName=gaogaotiantian.coredumpy-vscode)
+[![sponsor](https://img.shields.io/badge/%E2%9D%A4-Sponsor%20me-%23c96198?style=flat&logo=GitHub)](https://github.com/sponsors/gaogaotiantian)
 
 coredumpy saves your crash site for post-mortem debugging.
 
@@ -98,7 +103,7 @@ coredumpy peek <your_dump_file1> <your_dump_file2>
 ### VSCode Extension
 
 Download the [VSCode Extension](https://marketplace.visualstudio.com/items?itemName=gaogaotiantian.coredumpy-vscode)
-and right click your dump file - choose "Load with coredumpy".
+and right click your dump file - choose `Load with coredumpy`.
 
 ## Type support
 
@@ -163,14 +168,19 @@ it, the script will be executed. You can put anything you need in the script.
 Besides a couple of builtin types, coredumpy treats almost every object as an
 Python object with attributes, and that's what it records in the dump.
 
-It does not use `pickle` so you don't need to have the same run-time environment
-when you load the dump. It's also safer to open an arbitrary dump without the
-unsafe pickling process.
-
 That being said, most of the objects will not be "restored" as they were when
 being dumped. You are in an observer mode where you can inspect attributes of
 all objects. None of the methods of the objects would work, nor would any
 dymanic features.
+
+### Why not `pickle`?
+
+* Most importantly, `pickle` does not always work. You can't partially pickle
+  something, which means if you have an unpickleable object, you are doomed.
+* `pickle` requires the same environment to deserialize the objects, which
+  defeats the original purpose of loading the dump anywhere.
+* `pickle` is unsafe by design and we don't want unnecessary hesitation when
+  users try to load a dump from an untrusted source.
 
 ## License
 
