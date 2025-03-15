@@ -132,13 +132,12 @@ class DebugAdapterHandler(threading.Thread):
                     self.send_response(message, {})
                     self.send_event('initialized', {})
                 elif command == 'launch':
+                    thread_id = 0
                     program = message.get('arguments', {}).get('program', '')
                     if program:
                         self.debugger = CoredumpyDebugger(program)
                         self.debugger.start()
                         thread_id = int(self.debugger.current_thread)
-                    else:
-                        thread_id = 0
                     self.send_response(message, {})
                     self.send_event('stopped', {'reason': 'entry', 'threadId': thread_id, 'allThreadsStopped': True})
                 elif command == 'threads':

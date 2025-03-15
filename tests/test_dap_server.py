@@ -474,6 +474,7 @@ class TestDapServer(TestBase):
             variables = self.do_variables(client, 0)
             self.assertEqual(len(variables), 0)
             self.assertEqual(self.do_evaluate(client, 0, "x"), "")
+            self.do_continue(client)
             self.do_disconnect(client)
 
     def test_multithreading(self):
