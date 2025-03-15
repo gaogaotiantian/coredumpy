@@ -196,12 +196,11 @@ class Coredumpy:
                     threads[thread_id] = f
                     frames = []
                     current_thread = thread_id
-                frames.append(frame)
+                frames.append(f)
                 filename = f.f_code.co_filename
                 if filename not in files:
                     files.add(filename)
                 f = f.f_back  # type: ignore
-            threads[thread_id] = frame
             all_frames.update(frames)
 
         if current_thread is None:
@@ -263,11 +262,14 @@ class Coredumpy:
         container = PyObjectContainer()
         container.load_objects(data["objects"])
 
+        for thread in data["threads"]:
+            data["threads"][thread]["frame"] = container.get_object(data["threads"][thread]["frame"])
+
         return {
             "container": container,
             "threads": data["threads"],
             "current_thread": data["current_thread"],
-            "frame": container.get_object(data["threads"][data["current_thread"]]["frame"]),
+            "frame": data["threads"][data["current_thread"]]["frame"],
             "files": data["files"]
         }
 

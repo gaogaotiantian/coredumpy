@@ -20,6 +20,7 @@ coredumpy saves your crash site for post-mortem debugging.
 * Native support for unittest, pytest and run-time exceptions
 * Portable and safe dump
 * Support VSCode and pdb interface
+* Support multi-threading with VSCode
 
 ## Usage
 

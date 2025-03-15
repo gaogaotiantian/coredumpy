@@ -172,16 +172,16 @@ class DapClient:
         }
         self.send_message(threads_request)
 
-    def send_stack_trace(self):
+    def send_stack_trace(self, thread_id: int):
         """Send a 'stackTrace' request to the DAP server."""
         stack_trace_request = {
             "type": "request",
             "seq": self.seq,
             "command": "stackTrace",
             "arguments": {
-                "threadId": 1,
+                "threadId": thread_id,
                 "startFrame": 0,
-                "levels": 1
+                "levels": 20
             }
         }
         self.send_message(stack_trace_request)
@@ -316,8 +316,8 @@ class TestDapServer(TestBase):
         self.assertTrue(message["success"])
         return message["body"]["threads"]
 
-    def do_stack_trace(self, client: DapClient):
-        client.send_stack_trace()
+    def do_stack_trace(self, client: DapClient, thread_id: int):
+        client.send_stack_trace(thread_id)
         message = client.get_message()
         self.assertTrue(message["success"])
         return message["body"]["stackFrames"]
@@ -369,6 +369,13 @@ class TestDapServer(TestBase):
         message = client.get_message()
         self.assertTrue(message["success"])
 
+    def get_local_variable_from_frame(self, client: DapClient, frame_id, variable):
+        scopes = self.do_scope(client, frame_id)
+        variables = self.do_variables(client, scopes[0]["variablesReference"])
+        for var in variables:
+            if var["name"] == variable:
+                return var["value"]
+
     def test_run(self):
         with PrepareDapTest() as info:
             tmpdir, server, client = info
@@ -392,8 +399,9 @@ class TestDapServer(TestBase):
             self.run_script(script)
             self.do_initialize(client)
             self.do_launch(client, path)
-            self.do_threads(client)
-            stack_frames = self.do_stack_trace(client)
+            threads = self.do_threads(client)
+            self.assertEqual(len(threads), 1)
+            stack_frames = self.do_stack_trace(client, threads[0]["id"])
             self.assertGreaterEqual(len(stack_frames), 3)
             self.assertEqual(stack_frames[0]["name"], "g")
             source_reference = stack_frames[0]["source"]["sourceReference"]
@@ -455,8 +463,9 @@ class TestDapServer(TestBase):
             """)
             self.run_script(script)
             self.do_initialize(client)
-            self.do_threads(client)
-            stack_frames = self.do_stack_trace(client)
+            threads = self.do_threads(client)
+            self.assertEqual(len(threads), 0)
+            stack_frames = self.do_stack_trace(client, 0)
             self.assertEqual(len(stack_frames), 0)
             source = self.do_source(client, 0)
             self.assertEqual(source, "")
@@ -465,6 +474,57 @@ class TestDapServer(TestBase):
             variables = self.do_variables(client, 0)
             self.assertEqual(len(variables), 0)
             self.assertEqual(self.do_evaluate(client, 0, "x"), "")
+            self.do_disconnect(client)
+
+    def test_multithreading(self):
+        with PrepareDapTest() as info:
+            tmpdir, server, client = info
+            path = os.path.join(tmpdir, "coredumpy_dump")
+            script = textwrap.dedent(f"""
+                import coredumpy
+                import queue
+                import threading
+
+                def worker(q_in, q_out):
+                    s = "hello"
+                    q_out.put(s)
+                    q_in.get()
+
+                def main():
+                    q_in = queue.Queue()
+                    q_out = queue.Queue()
+                    thread = threading.Thread(target=worker, args=(q_in, q_out))
+                    thread.start()
+                    r = q_out.get()
+                    coredumpy.dump(path={repr(path)})
+                    q_in.put("world")
+                    thread.join()
+
+                main()
+            """)
+            self.run_script(script)
+            self.do_initialize(client)
+            self.do_launch(client, path)
+            threads = self.do_threads(client)
+            self.assertEqual(len(threads), 2)
+            if threads[0]["name"] == "MainThread":
+                main_thread_id = threads[0]["id"]
+                worker_thread_id = threads[1]["id"]
+            else:
+                main_thread_id = threads[1]["id"]
+                worker_thread_id = threads[0]["id"]
+            main_stack_frames = self.do_stack_trace(client, main_thread_id)
+            self.assertGreaterEqual(len(main_stack_frames), 2)
+            worker_stack_frames = self.do_stack_trace(client, worker_thread_id)
+            self.assertGreaterEqual(len(worker_stack_frames), 2)
+
+            frame_id = main_stack_frames[0]["id"]
+            r_val = self.get_local_variable_from_frame(client, frame_id, "r")
+            self.assertEqual(r_val, "hello")
+            frame_id = worker_stack_frames[2]["id"]
+            s_val = self.get_local_variable_from_frame(client, frame_id, "s")
+            self.assertEqual(s_val, "hello")
+
             self.do_disconnect(client)
 
     def test_launch_invalid_file(self):

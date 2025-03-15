@@ -7,6 +7,7 @@ import socket
 import sys
 import threading
 import traceback
+from types import FrameType
 from typing import Any, Dict, Iterable, List, Optional
 
 from .coredumpy import load_data_from_path
@@ -135,13 +136,20 @@ class DebugAdapterHandler(threading.Thread):
                     if program:
                         self.debugger = CoredumpyDebugger(program)
                         self.debugger.start()
+                        thread_id = int(self.debugger.current_thread)
+                    else:
+                        thread_id = 0
                     self.send_response(message, {})
-                    self.send_event('stopped', {'reason': 'entry', 'threadId': 1})
+                    self.send_event('stopped', {'reason': 'entry', 'threadId': thread_id, 'allThreadsStopped': True})
                 elif command == 'threads':
-                    self.send_response(message, {'threads': [{'id': 1, 'name': 'Thread 1'}]})
+                    if self.debugger:
+                        threads = self.debugger.get_threads()
+                    else:
+                        threads = []
+                    self.send_response(message, {'threads': threads})
                 elif command == 'stackTrace':
                     if self.debugger:
-                        stack_frames = self.debugger.get_stack_trace()
+                        stack_frames = self.debugger.get_stack_trace(message.get('arguments', {}).get('threadId', 0))
                     else:
                         stack_frames = []
                     self.send_response(message, {'stackFrames': stack_frames, 'totalFrames': len(stack_frames)})
@@ -175,8 +183,12 @@ class DebugAdapterHandler(threading.Thread):
                         result = ""
                     self.send_response(message, {'result': result, 'variablesReference': 0})
                 elif command in ('continue', 'next', 'stepIn', 'stepOut'):
+                    if self.debugger:
+                        thread_id = int(self.debugger.current_thread)
+                    else:
+                        thread_id = 0
                     self.send_response(message, {})
-                    self.send_event('stopped', {'reason': 'pause', 'threadId': 1})
+                    self.send_event('stopped', {'reason': 'entry', 'threadId': thread_id, 'allThreadsStopped': True})
                 elif command == 'disconnect':
                     if self.debugger:
                         self.debugger.stop()
@@ -242,21 +254,22 @@ class CoredumpyDebugger:
         self.container: Optional[PyObjectContainer] = None
         self.frame = None
         self.files: Dict[str, str] = {}
-        self.threads: Dict[str, str] = {}
+        self.threads: Dict[str, Dict[str, Any]] = {}
         self.current_thread: str = ''
         self.sid_to_file: Dict[int, str] = {}
         self.file_to_sid: Dict[str, int] = {}
         self.fid_to_frame: Dict[int, Any] = {}
-        self.frame_stack: List[Dict] = []
+        self.frame_stacks: Dict[str, List[Dict]] = {}
         self.real_id_to_id: Dict[int, str] = {}
 
-    def start(self):
+    def start(self) -> None:
         data = load_data_from_path(self.path)
         self.container = data["container"]
         self.frame = data["frame"]
         self.files = data["files"]
         self.threads = data["threads"]
         self.current_thread = data["current_thread"]
+        assert isinstance(self.container, PyObjectContainer)
         for oid, proxy in self.container._proxies.items():
             self.real_id_to_id[id(proxy)] = oid
         for sid, filename in enumerate(self.files):
@@ -264,25 +277,37 @@ class CoredumpyDebugger:
             self.sid_to_file[sid] = filename
             self.files[filename] = ''.join(self.files[filename])
 
-        self.frame_stack = []
-        frame = self.frame
-        while frame:
-            self.fid_to_frame[id(frame)] = frame
-            if frame.f_code.co_filename not in self.file_to_sid:
-                source = {'path': frame.f_code.co_filename}
-            else:
-                source = {'sourceReference': self.file_to_sid[frame.f_code.co_filename]}
-            self.frame_stack.append({
-                'id': id(frame),
-                'name': frame.f_code.co_name,
-                'line': frame.f_lineno,
-                'column': 0,
-                'source': source
-            })
-            frame = frame.f_back
+        self.frame_stacks = {}
+        for thread in self.threads:
+            self.frame_stacks[thread] = []
+            frame: FrameType = self.threads[thread]["frame"]
+            while frame:
+                self.fid_to_frame[id(frame)] = frame
+                source: Dict[str, Any]
+                if frame.f_code.co_filename not in self.file_to_sid:
+                    source = {'path': frame.f_code.co_filename}
+                else:
+                    source = {'sourceReference': self.file_to_sid[frame.f_code.co_filename]}
+                self.frame_stacks[thread].append({
+                    'id': id(frame),
+                    'name': frame.f_code.co_name,
+                    'line': frame.f_lineno,
+                    'column': 0,
+                    'source': source
+                })
+                frame = frame.f_back  # type: ignore
 
-    def get_stack_trace(self) -> List[Dict[str, Any]]:
-        return self.frame_stack
+    def get_threads(self) -> List[Dict[str, Any]]:
+        return [
+            {
+                'id': int(thread),
+                'name': self.threads[thread].get('name', 'Thread'),
+            }
+            for thread in self.threads
+        ]
+
+    def get_stack_trace(self, thread_id: int) -> List[Dict[str, Any]]:
+        return self.frame_stacks.get(str(thread_id), [])
 
     def get_source(self, source_reference: int) -> str:
         filename = self.sid_to_file[source_reference]
