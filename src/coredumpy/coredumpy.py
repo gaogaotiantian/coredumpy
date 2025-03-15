@@ -10,10 +10,10 @@ import linecache
 import os
 import platform
 import sys
+import threading
 import tokenize
 import textwrap
 import types
-import warnings
 from types import CodeType
 from typing import Callable, Literal, Optional, Union
 
@@ -180,16 +180,38 @@ class Coredumpy:
         if depth is not None:
             depth = depth + 2
 
-        frames = []
-        while frame:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
+        threads = {}
+        all_frames = set()
+        current_thread = None
+        for thread_id, f in sys._current_frames().items():
+            frames = []
+            threads[thread_id] = f
+            while f:
+                if f == frame:
+                    # This is the specified frame
+                    threads[thread_id] = f
+                    frames = []
+                    current_thread = thread_id
                 frames.append(frame)
-            filename = frame.f_code.co_filename
-            if filename not in files:
-                files.add(filename)
-            frame = frame.f_back
-        container.add_objects(frames, depth)
+                filename = f.f_code.co_filename
+                if filename not in files:
+                    files.add(filename)
+                f = f.f_back
+            threads[thread_id] = frame
+            all_frames.update(frames)
+
+        if current_thread is None:
+            # We dumped some frame that's not in any thread, make up one
+            threads[0] = frame
+            current_thread = 0
+            while frame:
+                filename = frame.f_code.co_filename
+                if filename not in files:
+                    files.add(filename)
+                all_frames.add(frame)
+                frame = frame.f_back
+
+        container.add_objects(all_frames, depth)
 
         file_lines = {}
 
@@ -200,7 +222,8 @@ class Coredumpy:
 
         ret = json.dumps({
             "objects": container.get_objects(),
-            "frame": frame_id,
+            "threads": {str(thread_id): str(id(f)) for thread_id, f in threads.items()},
+            "current_thread": str(current_thread),
             "files": file_lines,
             "description": description,
             "metadata": cls.get_metadata()
@@ -229,7 +252,8 @@ class Coredumpy:
 
         container = PyObjectContainer()
         container.load_objects(data["objects"])
-        frame = container.get_object(data["frame"])
+        current_thread = data["current_thread"]
+        frame = container.get_object(data["threads"][current_thread])
 
         return container, frame, data["files"]
 
