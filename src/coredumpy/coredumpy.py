@@ -252,14 +252,21 @@ class Coredumpy:
 
         container = PyObjectContainer()
         container.load_objects(data["objects"])
-        current_thread = data["current_thread"]
-        frame = container.get_object(data["threads"][current_thread])
 
-        return container, frame, data["files"]
+        return {
+            "container": container,
+            "threads": data["threads"],
+            "current_thread": data["current_thread"],
+            "frame": container.get_object(data["threads"][data["current_thread"]]),
+            "files": data["files"]
+        }
 
     @classmethod
     def load(cls, path: str, debugger: Literal["pdb", "ipdb"] = "pdb"):
-        container, frame, files = cls.load_data_from_path(path)
+        data = cls.load_data_from_path(path)
+        container = data["container"]
+        frame = data["frame"]
+        files = data["files"]
         for filename, lines in files.items():
             linecache.cache[filename] = (len(lines), None, lines, filename)
 

@@ -249,7 +249,12 @@ class CoredumpyDebugger:
         self.real_id_to_id: Dict[int, str] = {}
 
     def start(self):
-        self.container, self.frame, self.files = load_data_from_path(self.path)
+        data = load_data_from_path(self.path)
+        self.container = data["container"]
+        self.frame = data["frame"]
+        self.files = data["files"]
+        self.threads = data["threads"]
+        self.current_thread = data["current_thread"]
         for oid, proxy in self.container._proxies.items():
             self.real_id_to_id[id(proxy)] = oid
         for sid, filename in enumerate(self.files):
