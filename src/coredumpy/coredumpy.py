@@ -238,11 +238,11 @@ class Coredumpy:
             linecache.cache[filename] = (len(lines), None, lines, filename)
 
         if debugger == "pdb":
-            from pdb import Pdb
-            pdb_instance = Pdb()
+            import pdb
+            pdb_instance = pdb.Pdb()
         elif debugger == "ipdb":
-            from IPython.core.debugger import Pdb
-            pdb_instance = Pdb()
+            import IPython.core.debugger
+            pdb_instance = IPython.core.debugger.Pdb()
         else:  # pragma: no cover
             raise ValueError(f"Unknown debugger: {debugger}")
         pdb_instance.reset()
