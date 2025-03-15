@@ -174,6 +174,9 @@ class DebugAdapterHandler(threading.Thread):
                     else:
                         result = ""
                     self.send_response(message, {'result': result, 'variablesReference': 0})
+                elif command in ('continue', 'next', 'stepIn', 'stepOut'):
+                    self.send_response(message, {})
+                    self.send_event('stopped', {'reason': 'pause', 'threadId': 1})
                 elif command == 'disconnect':
                     if self.debugger:
                         self.debugger.stop()

@@ -235,6 +235,18 @@ class DapClient:
         }
         self.send_message(evaluate_request)
 
+    def send_continue(self):
+        """Send a 'continue' request to the DAP server."""
+        continue_request = {
+            "type": "request",
+            "seq": self.seq,
+            "command": "continue",
+            "arguments": {
+                "threadId": 1
+            }
+        }
+        self.send_message(continue_request)
+
     def send_disconnect(self):
         """Send a 'disconnect' request to the DAP server."""
         disconnect_request = {
@@ -334,6 +346,14 @@ class TestDapServer(TestBase):
         self.assertTrue(message["success"])
         return message["body"]["result"]
 
+    def do_continue(self, client: DapClient):
+        client.send_continue()
+        message = client.get_message()
+        self.assertTrue(message["success"])
+        message = client.get_message()
+        self.assertEqual(message["event"], "stopped")
+        return
+
     def do_disconnect(self, client: DapClient):
         client.send_disconnect()
         message = client.get_message()
@@ -396,6 +416,12 @@ class TestDapServer(TestBase):
             for var in local_variables:
                 variable = self.do_variables(client, var["variablesReference"])
                 self.assertGreaterEqual(len(variable), 0)
+
+            # continue should not break stuff
+            self.do_continue(client)
+            local_variables = self.do_variables(client, scopes[0]["variablesReference"])
+            variable_names = set(var["name"] for var in local_variables)
+            self.assertEqual(variable_names, {"arg", "p", "d"})
 
             # Let's do some eval / exec
             self.assertEqual(self.do_evaluate(client, frame_id, "d['age']"), "30")
