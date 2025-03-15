@@ -21,11 +21,11 @@ class PyObjectContainer:
         self._objects_holder.clear()
         self._proxies.clear()
 
-    def add_object(self, obj, depth=None):
+    def add_objects(self, objs, depth=None):
         TypeSupportManager.load_lazy_supports()
         objects = {}
         curr_recursion_depth = 0
-        pending_objects = [obj]
+        pending_objects = list(objs)
         if depth is None:
             depth = self._max_recursion_depth
         while curr_recursion_depth < depth and pending_objects:
@@ -43,7 +43,10 @@ class PyObjectContainer:
             curr_recursion_depth += 1
             pending_objects = list(next_objects.values())
         self._objects.update(objects)
-        return self._objects[str(id(obj))]
+        return [self._objects[str(id(obj))] for obj in objs]
+
+    def add_object(self, obj, depth=None):
+        return self.add_objects([obj], depth)[0]
 
     def load_objects(self, objects):
         TypeSupportManager.load_lazy_supports()

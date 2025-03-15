@@ -180,14 +180,16 @@ class Coredumpy:
         if depth is not None:
             depth = depth + 2
 
+        frames = []
         while frame:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                container.add_object(frame, depth)
+                frames.append(frame)
             filename = frame.f_code.co_filename
             if filename not in files:
                 files.add(filename)
             frame = frame.f_back
+        container.add_objects(frames, depth)
 
         file_lines = {}
 
