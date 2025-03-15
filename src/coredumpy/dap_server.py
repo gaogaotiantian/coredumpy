@@ -242,6 +242,8 @@ class CoredumpyDebugger:
         self.container: Optional[PyObjectContainer] = None
         self.frame = None
         self.files: Dict[str, str] = {}
+        self.threads: Dict[str, str] = {}
+        self.current_thread: str = ''
         self.sid_to_file: Dict[int, str] = {}
         self.file_to_sid: Dict[str, int] = {}
         self.fid_to_frame: Dict[int, Any] = {}
