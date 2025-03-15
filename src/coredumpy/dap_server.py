@@ -109,7 +109,7 @@ class DebugAdapterHandler(threading.Thread):
                             self.process_message(json.loads(content))
                         else:
                             break
-                except socket.timeout:
+                except socket.timeout:  # pragma: no cover
                     continue
             except Exception as e:  # pragma: no cover
                 if self.running:
