@@ -84,11 +84,13 @@ coredumpy.dump(description="a random dump")
 Load your dump with
 
 ```
+# This will bring up pdb
 coredumpy load <your_dump_file>
+# This will bring up ipdb, ipython is required
+coredumpy load --ipdb <your_dump_file>
 ```
 
-A [pdb](https://docs.python.org/3/library/pdb.html) debugger will be brought up
-and of course not everything is supported.
+A debugger will be brought up and of course not everything is supported.
 
 ### peek
 
