@@ -3,6 +3,7 @@
 
 
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -15,7 +16,7 @@ from .util import normalize_commands
 
 
 class TestBase(unittest.TestCase):
-    def run_test(self, script, dumppath, commands, use_cli_run=False):
+    def run_test(self, script, dumppath, commands, use_cli_run=False, debugger="pdb"):
         script = textwrap.dedent(script)
         with tempfile.TemporaryDirectory() as tmpdir:
             with open(f"{tmpdir}/script.py", "w") as f:
@@ -27,12 +28,22 @@ class TestBase(unittest.TestCase):
                 subprocess.run(normalize_commands([sys.executable, f"{tmpdir}/script.py"]),
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-            process = subprocess.Popen(normalize_commands(["coredumpy", "load", dumppath]),
-                                       stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if debugger == "pdb":
+                cmd = normalize_commands(["coredumpy", "load", dumppath])
+            elif debugger == "ipdb":
+                cmd = normalize_commands(["coredumpy", "load", "--ipdb", dumppath])
+            else:
+                raise ValueError(f"Unknown debugger: {debugger}")
+
+            process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             stdout, stderr = process.communicate("\n".join(commands).encode())
             stdout = stdout.decode(errors='backslashreplace')
             stderr = stderr.decode(errors='backslashreplace')
+            if debugger == "ipdb":
+                ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+                stdout = ansi_escape.sub('', stdout)
+                stderr = ansi_escape.sub('', stderr)
         try:
             os.remove(dumppath)
         except FileNotFoundError:

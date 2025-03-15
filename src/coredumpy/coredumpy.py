@@ -8,7 +8,6 @@ import inspect
 import json
 import linecache
 import os
-import pdb
 import platform
 import sys
 import tokenize
@@ -16,7 +15,7 @@ import textwrap
 import types
 import warnings
 from types import CodeType
-from typing import Callable, Optional, Union
+from typing import Callable, Literal, Optional, Union
 
 from .patch import patch_all
 from .py_object_container import PyObjectContainer
@@ -233,12 +232,19 @@ class Coredumpy:
         return container, frame, data["files"]
 
     @classmethod
-    def load(cls, path: str):
+    def load(cls, path: str, debugger: Literal["pdb", "ipdb"] = "pdb"):
         container, frame, files = cls.load_data_from_path(path)
         for filename, lines in files.items():
             linecache.cache[filename] = (len(lines), None, lines, filename)
 
-        pdb_instance = pdb.Pdb()
+        if debugger == "pdb":
+            from pdb import Pdb
+            pdb_instance = Pdb()
+        elif debugger == "ipdb":
+            from IPython.core.debugger import Pdb
+            pdb_instance = Pdb()
+        else:  # pragma: no cover
+            raise ValueError(f"Unknown debugger: {debugger}")
         pdb_instance.reset()
         pdb_instance.interaction(frame, None)
         container.clear()  # pragma: no cover

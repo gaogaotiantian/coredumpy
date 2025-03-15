@@ -20,6 +20,7 @@ def main():
 
     subparsers_load = subparsers.add_parser("load", help="Load a dump file.")
     subparsers_load.add_argument("file", type=str, help="The dump file to load.")
+    subparsers_load.add_argument("--ipdb", action="store_true", help="Use ipdb as the debugger.")
 
     subparsers_peek = subparsers.add_parser("peek", help="Peek a dump file.")
     subparsers_peek.add_argument("files", help="The dump file to load.", nargs="+")
@@ -30,7 +31,8 @@ def main():
 
     if args.command == "load":
         if os.path.exists(args.file):
-            load(args.file)
+            debugger = "ipdb" if args.ipdb else "pdb"
+            load(args.file, debugger=debugger)
         else:
             print(f"File {args.file} not found.")
     elif args.command == "peek":
