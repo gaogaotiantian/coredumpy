@@ -10,11 +10,11 @@ import linecache
 import os
 import platform
 import sys
+import threading
 import tokenize
 import textwrap
 import types
-import warnings
-from types import CodeType
+from types import CodeType, FrameType
 from typing import Callable, Literal, Optional, Union
 
 from .patch import patch_all
@@ -168,10 +168,9 @@ class Coredumpy:
             inner_frame = inspect.currentframe()
             assert inner_frame is not None
             frame = inner_frame.f_back
+            assert frame is not None
 
         container = PyObjectContainer()
-
-        frame_id = str(id(frame))
 
         # The intuitive minimum depth is 1, but we start the count from the
         # frame, which needs frame->f_locals to access the local variables
@@ -180,27 +179,60 @@ class Coredumpy:
         if depth is not None:
             depth = depth + 2
 
-        frames = []
-        while frame:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                frames.append(frame)
-            filename = frame.f_code.co_filename
-            if filename not in files:
-                files.add(filename)
-            frame = frame.f_back
-        container.add_objects(frames, depth)
+        threads = {}
+        thread_names = {}
+        all_frames = set()
+        current_thread = None
+        for thread in threading.enumerate():
+            thread_names[thread.ident] = thread.name
+
+        for thread_id, f in sys._current_frames().items():
+            frames: list[FrameType]
+            frames = []
+            threads[thread_id] = f
+            while f:
+                if f == frame:
+                    # This is the specified frame
+                    threads[thread_id] = f
+                    frames = []
+                    current_thread = thread_id
+                frames.append(f)
+                filename = f.f_code.co_filename
+                if filename not in files:
+                    files.add(filename)
+                f = f.f_back  # type: ignore
+            all_frames.update(frames)
+
+        if current_thread is None:
+            # We dumped some frame that's not in any thread, make up one
+            threads[0] = frame
+            current_thread = 0
+            while frame:
+                filename = frame.f_code.co_filename
+                if filename not in files:
+                    files.add(filename)
+                all_frames.add(frame)
+                frame = frame.f_back
+
+        container.add_objects(all_frames, depth)
 
         file_lines = {}
 
         for filename in files:
             if os.path.exists(filename):
-                with tokenize.open(filename) as f:
-                    file_lines[filename] = f.readlines()
+                with tokenize.open(filename) as fio:
+                    file_lines[filename] = fio.readlines()
 
         ret = json.dumps({
             "objects": container.get_objects(),
-            "frame": frame_id,
+            "threads": {
+                str(thread_id): {
+                    "frame": str(id(f)),
+                    "name": thread_names.get(thread_id, f"{thread_id}")
+                }
+                for thread_id, f in threads.items()
+            },
+            "current_thread": str(current_thread),
             "files": file_lines,
             "description": description,
             "metadata": cls.get_metadata()
@@ -229,13 +261,24 @@ class Coredumpy:
 
         container = PyObjectContainer()
         container.load_objects(data["objects"])
-        frame = container.get_object(data["frame"])
 
-        return container, frame, data["files"]
+        for thread in data["threads"]:
+            data["threads"][thread]["frame"] = container.get_object(data["threads"][thread]["frame"])
+
+        return {
+            "container": container,
+            "threads": data["threads"],
+            "current_thread": data["current_thread"],
+            "frame": data["threads"][data["current_thread"]]["frame"],
+            "files": data["files"]
+        }
 
     @classmethod
     def load(cls, path: str, debugger: Literal["pdb", "ipdb"] = "pdb"):
-        container, frame, files = cls.load_data_from_path(path)
+        data = cls.load_data_from_path(path)
+        container = data["container"]
+        frame = data["frame"]
+        files = data["files"]
         for filename, lines in files.items():
             linecache.cache[filename] = (len(lines), None, lines, filename)
 
