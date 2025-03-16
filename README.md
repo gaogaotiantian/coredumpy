@@ -78,11 +78,11 @@ coredumpy.dump(directory='./dumps')
 coredumpy.dump(description="a random dump")
 ```
 
+</details>
+
 A [github action](https://github.com/gaogaotiantian/upload-coredumpy) is available
 to upload your coredumpy dumps and generate a load link to open the dumps in VSCode
 directly.
-
-</details>
 
 ### load
 
