@@ -13,11 +13,11 @@ class TestRegression(TestBase):
                 coredumpy.dump(path="coredumpy_dump")
             f()
         """
-        _, _ = self.run_test(script, "coredumpy_dump", [
-            # "import sys",
-            # "p sys._getframe().f_globals.get('__loader__', 'loader not found')",
-            # "p sys._getframe().f_globals.get('__spec__', 'spec not found')",
+        stdout, _ = self.run_test(script, "coredumpy_dump", [
+            "import sys",
+            "p sys._getframe().f_globals.get('__loader__', 'loader not found')",
+            "p sys._getframe().f_globals.get('__spec__', 'spec not found')",
             "q"
         ])
-        # self.assertIn("loader not found", stdout)
-        # self.assertIn("spec not found", stdout)
+        self.assertIn("loader not found", stdout)
+        self.assertIn("spec not found", stdout)

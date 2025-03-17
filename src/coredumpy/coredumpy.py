@@ -268,14 +268,14 @@ class Coredumpy:
         # pop __loader__ and __spec__ from all f_globals because linecache
         # tries to use them to get the source code, which could result in
         # an arbitrary code execution
-        # from .py_object_proxy import PyObjectProxy
-        # for thread in data["threads"]:
-        #     frame = data["threads"][thread]["frame"]
-        #     assert isinstance(frame, PyObjectProxy)
-        #     while frame:
-        #         frame.f_globals.pop("__loader__", None)
-        #         frame.f_globals.pop("__spec__", None)
-        #         frame = frame.f_back
+        from .py_object_proxy import PyObjectProxy
+        for thread in data["threads"]:
+            frame = data["threads"][thread]["frame"]
+            assert isinstance(frame, PyObjectProxy)
+            while frame:
+                frame.f_globals.pop("__loader__", None)
+                frame.f_globals.pop("__spec__", None)
+                frame = frame.f_back
 
         return {
             "container": container,
