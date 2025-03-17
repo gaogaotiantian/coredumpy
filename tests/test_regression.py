@@ -6,14 +6,13 @@ from .base import TestBase
 
 class TestRegression(TestBase):
     def test_loader(self):
-        pass
         # __loader__ and __spec__ should not be loaded for security reasons
-        # script = """
-        #     import coredumpy
-        #     def f():
-        #         coredumpy.dump(path="coredumpy_dump")
-        #     f()
-        # """
+        script = """
+            import coredumpy
+            def f():
+                coredumpy.dump(path="coredumpy_dump")
+            f()
+        """
         # stdout, _ = self.run_test(script, "coredumpy_dump", [
         #     "import sys",
         #     "p sys._getframe().f_globals.get('__loader__', 'loader not found')",
