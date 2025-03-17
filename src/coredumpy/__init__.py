@@ -9,6 +9,7 @@ from .config import config
 from .coredumpy import Coredumpy, dump, dumps, load
 from .except_hook import patch_except
 from .main import main
+from .pytest_hook import patch_pytest
 from .type_support import TypeSupportBase, TypeSupportContainerBase, NotReady
 from .unittest_hook import patch_unittest
 from .conf_hook import startup_conf
@@ -24,6 +25,7 @@ __all__ = [
     "load",
     "main",
     "patch_except",
+    "patch_pytest",
     "patch_unittest",
     "pytest_hook",
     "TypeSupportBase",
