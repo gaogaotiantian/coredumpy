@@ -270,7 +270,7 @@ class IdAdapter:
         _id = id(obj)
         if _id in self._id_index:
             return self._id_index[_id].rid
-        return 0
+        return 0  # pragma: no cover
 
     def rid_to_object(self, rid):
         if rid in self._rid_index:
