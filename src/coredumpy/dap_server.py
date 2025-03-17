@@ -7,7 +7,6 @@ import socket
 import sys
 import threading
 import traceback
-from collections import namedtuple
 from types import FrameType
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -245,38 +244,6 @@ class DebugAdapterHandler(threading.Thread):
         print("[Client] Client handler closed", flush=True)
 
 
-class IdAdapter:
-    # id is the id of the object in the current process
-    # oid is the id of the object in the original dumped process
-    # rid is the reference id of the object to DAP clients
-    Container = namedtuple('Container', ['id', 'oid', 'rid', 'value'])
-    def __init__(self) -> None:
-        self._id_index = {}
-        self._oid_index = {}
-        self._rid_index = {}
-        self._rid = 1
-
-    def add(self, obj, oid):
-        _id = id(obj)
-        if _id not in self._id_index:
-            container = self.Container(id=_id, oid=oid, rid=self._rid, value=obj) 
-            self._id_index[_id] = container
-            self._oid_index[oid] = container
-            self._rid_index[self._rid] = container
-            self._rid += 1
-
-    def object_to_rid(self, obj):
-        _id = id(obj)
-        if _id in self._id_index:
-            return self._id_index[_id].rid
-        return 0
-
-    def rid_to_object(self, rid):
-        if rid in self._rid_index:
-            return self._rid_index[rid].value
-        return None
-
-
 class CoredumpyDebugger:
     def __init__(self, path: str):
         self.path = path
@@ -293,7 +260,6 @@ class CoredumpyDebugger:
         self.fid_to_frame: Dict[int, Any] = {}
         self.frame_stacks: Dict[str, List[Dict]] = {}
         self.real_id_to_id: Dict[int, str] = {}
-        self.id_adapter = IdAdapter()
 
     def start(self) -> None:
         data = load_data_from_path(self.path)
@@ -304,7 +270,7 @@ class CoredumpyDebugger:
         self.current_thread = data["current_thread"]
         assert isinstance(self.container, PyObjectContainer)
         for oid, proxy in self.container._proxies.items():
-            self.id_adapter.add(proxy, oid)
+            self.real_id_to_id[id(proxy)] = oid
         for sid, filename in enumerate(self.files):
             self.file_to_sid[filename] = sid
             self.sid_to_file[sid] = filename
@@ -315,13 +281,14 @@ class CoredumpyDebugger:
             self.frame_stacks[thread] = []
             frame: FrameType = self.threads[thread]["frame"]
             while frame:
+                self.fid_to_frame[id(frame)] = frame
                 source: Dict[str, Any]
                 if frame.f_code.co_filename not in self.file_to_sid:
                     source = {'path': frame.f_code.co_filename}
                 else:
                     source = {'sourceReference': self.file_to_sid[frame.f_code.co_filename]}
                 self.frame_stacks[thread].append({
-                    'id': self.id_adapter.object_to_rid(frame),
+                    'id': id(frame),
                     'name': frame.f_code.co_name,
                     'line': frame.f_lineno,
                     'column': 0,
@@ -346,27 +313,27 @@ class CoredumpyDebugger:
         return self.files.get(filename, '')
 
     def get_scopes(self, frame_id: int) -> List[Dict[str, Any]]:
-        frame = self.id_adapter.rid_to_object(frame_id)
+        frame = self.fid_to_frame.get(frame_id)
         if frame is None:
             return []
         return [
             {
                 'name': 'Local',
                 'presentationHint': 'locals',
-                'variablesReference': self.id_adapter.object_to_rid(frame.f_locals),
+                'variablesReference': id(frame.f_locals),
                 'expensive': False
             },
             {
                 'name': 'Global',
                 'presentationHint': 'globals',
-                'variablesReference': self.id_adapter.object_to_rid(frame.f_globals),
+                'variablesReference': id(frame.f_globals),
                 'expensive': False
             }
         ]
 
     def get_variable(self, name, variable) -> Dict[str, Any]:
         if isinstance(variable, PyObjectProxy) or is_container(type(variable)):
-            variables_reference = self.id_adapter.object_to_rid(variable)
+            variables_reference = id(variable)
         else:
             variables_reference = 0
 
@@ -380,7 +347,7 @@ class CoredumpyDebugger:
     def get_variables(self, variables_reference: int) -> List[Dict[str, Any]]:
         if self.container is None:  # pragma: no cover
             return []
-        obj = self.id_adapter.rid_to_object(variables_reference)
+        obj = self.container.get_object(self.real_id_to_id[variables_reference])
 
         variables = []
         it: Iterable
@@ -400,7 +367,7 @@ class CoredumpyDebugger:
         return variables
 
     def get_evaluate(self, frame_id: int, expression: str) -> str:
-        frame = self.id_adapter.rid_to_object(frame_id)
+        frame = self.fid_to_frame.get(frame_id)
         if not frame:
             return ""
 
