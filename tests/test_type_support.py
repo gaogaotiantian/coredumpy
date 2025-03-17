@@ -101,6 +101,9 @@ class TestTypeSupport(TestBase):
         with open("temp_module_for_test.py", "w") as f:
             f.write("pass")
 
+        import time
+        time.sleep(1)
+
         temp_module_for_test = importlib.import_module("temp_module_for_test")
         container = PyObjectContainer()
         container.add_object(temp_module_for_test)
