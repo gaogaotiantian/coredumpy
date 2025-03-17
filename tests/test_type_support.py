@@ -1,9 +1,7 @@
 # Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
-import importlib
 import sys
-import tempfile
 
 from coredumpy.py_object_container import PyObjectContainer
 from coredumpy.py_object_proxy import _unknown, PyObjectProxy
