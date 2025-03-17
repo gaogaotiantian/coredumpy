@@ -189,6 +189,30 @@ dymanic features.
 * `pickle` is unsafe by design and we don't want unnecessary hesitation when
   users try to load a dump from an untrusted source.
 
+### Security concerns
+
+Because coredumpy dumps the whole frame stack, you should take care of your
+sensitive information, for example, API keys.
+
+coredumpy has a default-on filter for strings that looks like API keys
+(`"[A-Za-z0-9]{32,1024}"`), but if you know what your key looks like,
+you should add the pattern to protect your keys.
+
+```python
+from coredumpy import config
+config.secret_patterns.append(re.compile("<your API key pattern>"))
+```
+
+You can edit `config.secret_patterns` as you wish, it's a list of
+`re.Pattern`s that coredumpy will use to match against all strings.
+
+If you need to turn off this feature:
+
+```python
+from coredumpy import config
+config.hide_secret = False
+```
+
 ## License
 
 Copyright 2024-2025 Tian Gao.

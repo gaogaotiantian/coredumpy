@@ -3,9 +3,11 @@
 
 import builtins
 import importlib
+import re
 import sys
 import types
 
+from ..config import config
 from ..type_support import TypeSupportBase, TypeSupportContainerBase, NotReady
 
 
@@ -55,6 +57,15 @@ class FloatSupport(BasicTypeSupportBase):
 class StrSupport(BasicTypeSupportBase):
     _type = str
     _annotation = "str"
+
+    @classmethod
+    def dump(cls, obj):
+        if config.hide_secret:
+            for pattern in config.secret_patterns:
+                if pattern.match(obj):
+                    obj = "***redacted***"
+                    break
+        return super().dump(obj)
 
 
 class BytesSupport(TypeSupportBase):
