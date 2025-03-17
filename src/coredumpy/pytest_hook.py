@@ -1,4 +1,21 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
+
+from typing import Optional
+
 import coredumpy
+
+
+_enable_coredumpy = False
+_coredumpy_dir = "./coredumpy"
+
+
+def patch_pytest(directory: Optional[str] = None):
+    global _enable_coredumpy
+    global _coredumpy_dir
+    _enable_coredumpy = True
+    if directory is not None:
+        _coredumpy_dir = directory
 
 
 def pytest_addoption(parser):
@@ -23,7 +40,11 @@ def _get_description(report):
 
 
 def pytest_exception_interact(node, call, report):
-    if not node.config.getoption("--enable-coredumpy"):
+    if node.config.getoption("--enable-coredumpy"):
+        directory = node.config.getoption("--coredumpy-dir")
+    elif _enable_coredumpy:
+        directory = _coredumpy_dir
+    else:
         return
 
     import pytest  # type: ignore
@@ -34,7 +55,7 @@ def pytest_exception_interact(node, call, report):
                 tb = tb.tb_next
             filename = coredumpy.dump(tb.tb_frame,
                                       description=_get_description(report),
-                                      directory=node.config.getoption("--coredumpy-dir"))
+                                      directory=directory)
             print(f'Your frame stack is dumped, open it with\n'
                   f'coredumpy load {filename}')
         except Exception:  # pragma: no cover

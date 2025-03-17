@@ -43,3 +43,29 @@ class TestPytest(TestBase):
             """
             self.run_script(script)
             self.assertEqual(len(os.listdir(dump_path)), 2)
+
+    def test_pytest_patch(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test = textwrap.dedent("""
+                def test_for_pytest_equal():
+                    assert 1 == 2
+
+                def test_for_pytest_greater():
+                    assert 1 > 2
+            """)
+            with open(os.path.join(tmpdir, "test.py"), "w") as f:
+                f.write(test)
+
+            test_path = os.path.join(tmpdir, "test.py")
+            dump_path = os.path.join(tmpdir, "dump")
+
+            script = f"""
+                import coredumpy
+                import pytest
+                import os
+                coredumpy.patch_pytest(directory={repr(dump_path)})
+                pytest.main([{repr(test_path)}])
+            """
+            stdout, stderr = self.run_script(script)
+            self.assertEqual(len(os.listdir(dump_path)), 2,
+                             f"The dump directory has {os.listdir(dump_path)}\n{stdout}\n{stderr}")
