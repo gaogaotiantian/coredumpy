@@ -5,6 +5,7 @@
 __version__ = "0.4.0"
 
 import coredumpy.pytest_hook as pytest_hook
+from .config import config
 from .coredumpy import Coredumpy, dump, dumps, load
 from .except_hook import patch_except
 from .main import main
@@ -17,6 +18,7 @@ startup_conf()
 
 __all__ = [
     "Coredumpy",
+    "config",
     "dump",
     "dumps",
     "load",
