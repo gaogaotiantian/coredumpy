@@ -25,6 +25,7 @@ __all__ = [
     "load",
     "main",
     "patch_except",
+    "patch_pytest",
     "patch_unittest",
     "pytest_hook",
     "TypeSupportBase",
