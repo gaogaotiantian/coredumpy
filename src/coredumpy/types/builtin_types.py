@@ -3,7 +3,6 @@
 
 import builtins
 import importlib
-import re
 import sys
 import types
 
