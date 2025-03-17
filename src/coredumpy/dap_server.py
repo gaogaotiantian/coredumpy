@@ -250,16 +250,17 @@ class IdAdapter:
     # oid is the id of the object in the original dumped process
     # rid is the reference id of the object to DAP clients
     Container = namedtuple('Container', ['id', 'oid', 'rid', 'value'])
+
     def __init__(self) -> None:
-        self._id_index = {}
-        self._oid_index = {}
-        self._rid_index = {}
+        self._id_index: Dict[int, IdAdapter.Container] = {}
+        self._oid_index: Dict[int, IdAdapter.Container] = {}
+        self._rid_index: Dict[int, IdAdapter.Container] = {}
         self._rid = 1
 
     def add(self, obj, oid):
         _id = id(obj)
         if _id not in self._id_index:
-            container = self.Container(id=_id, oid=oid, rid=self._rid, value=obj) 
+            container = self.Container(id=_id, oid=oid, rid=self._rid, value=obj)
             self._id_index[_id] = container
             self._oid_index[oid] = container
             self._rid_index[self._rid] = container
