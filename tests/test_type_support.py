@@ -98,25 +98,32 @@ class TestTypeSupport(TestBase):
         proxy = self.convert_object(os)
         self.assertEqual(proxy, os)
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # Create a module, then delete the file before converting
-            module_path = os.path.join(tmpdir, "temp_module_for_test.py")
-            with open(module_path, "w") as f:
-                f.write("pass")
+        script = """
+            import importlib
+            import os
+            import sys
+            import tempfile
+            import coredumpy
+            def f():
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    # Create a module, then delete the file before converting
+                    module_path = os.path.join(tmpdir, "temp_module_for_test.py")
+                    with open(module_path, "w") as f:
+                        f.write("pass")
+                    sys.path.append(tmpdir)
+                    temp_module_for_test = importlib.import_module("temp_module_for_test")
+                coredumpy.dump(path="coredumpy_dump")
+            f()
+        """
 
-            try:
-                sys.path.append(tmpdir)
-                temp_module_for_test = importlib.import_module("temp_module_for_test")
-                container = PyObjectContainer()
-                container.add_object(temp_module_for_test)
+        stdout, _ = self.run_test(script, "coredumpy_dump", [
+            "p type(temp_module_for_test)",
+            "p os",
+            "q"
+        ])
 
-                sys.modules.pop("temp_module_for_test")
-                os.remove(module_path)
-                container.load_objects(container.get_objects())
-                proxy = container.get_object(str(id(temp_module_for_test)))
-                self.assertEqual(proxy._coredumpy_type, "module")
-            finally:
-                sys.path.remove(tmpdir)
+        self.assertIn("PyObjectProxy", stdout)
+        self.assertIn("module 'os'", stdout)
 
     def test_builtin_function(self):
         proxy = self.convert_object(abs)
