@@ -19,8 +19,6 @@ jobs:
             os: macos-14
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
-    env:
-      COREDUMPY_DUMP_DIR: ${{ github.workspace }}/coredumpy_data
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -52,10 +50,3 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         slug: gaogaotiantian/coredumpy
         file: ./coverage.xml
-    - name: Upload coredumpy data if applicable
-      uses: gaogaotiantian/upload-coredumpy@v0.2
-      if: failure()
-      with:
-        name: coredumpy_data_${{ matrix.os }}_${{ matrix.python-version }}
-        path: ${{ env.COREDUMPY_DUMP_DIR }}
-        retention-days: 7
