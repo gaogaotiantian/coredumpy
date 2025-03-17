@@ -281,25 +281,18 @@ class IdAdapter:
 class CoredumpyDebugger:
     def __init__(self, path: str):
         self.path = path
-        self.process = None
-        self.current_line = 0
-        self.current_file = ''
         self.container: Optional[PyObjectContainer] = None
-        self.frame = None
         self.files: Dict[str, str] = {}
         self.threads: Dict[str, Dict[str, Any]] = {}
         self.current_thread: str = ''
         self.sid_to_file: Dict[int, str] = {}
         self.file_to_sid: Dict[str, int] = {}
-        self.fid_to_frame: Dict[int, Any] = {}
         self.frame_stacks: Dict[str, List[Dict]] = {}
-        self.real_id_to_id: Dict[int, str] = {}
         self.id_adapter = IdAdapter()
 
     def start(self) -> None:
         data = load_data_from_path(self.path)
         self.container = data["container"]
-        self.frame = data["frame"]
         self.files = data["files"]
         self.threads = data["threads"]
         self.current_thread = data["current_thread"]
