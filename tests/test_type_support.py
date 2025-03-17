@@ -3,6 +3,7 @@
 
 import importlib
 import sys
+import tempfile
 
 from coredumpy.py_object_container import PyObjectContainer
 from coredumpy.py_object_proxy import _unknown, PyObjectProxy
@@ -97,19 +98,25 @@ class TestTypeSupport(TestBase):
         proxy = self.convert_object(os)
         self.assertEqual(proxy, os)
 
-        # Create a module, then delete the file before converting
-        with open("temp_module_for_test.py", "w") as f:
-            f.write("pass")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create a module, then delete the file before converting
+            module_path = os.path.join(tmpdir, "temp_module_for_test.py")
+            with open(module_path, "w") as f:
+                f.write("pass")
 
-        temp_module_for_test = importlib.import_module("temp_module_for_test")
-        container = PyObjectContainer()
-        container.add_object(temp_module_for_test)
+            try:
+                sys.path.append(tmpdir)
+                temp_module_for_test = importlib.import_module("temp_module_for_test")
+                container = PyObjectContainer()
+                container.add_object(temp_module_for_test)
 
-        sys.modules.pop("temp_module_for_test")
-        os.remove("temp_module_for_test.py")
-        container.load_objects(container.get_objects())
-        proxy = container.get_object(str(id(temp_module_for_test)))
-        self.assertEqual(proxy._coredumpy_type, "module")
+                sys.modules.pop("temp_module_for_test")
+                os.remove(module_path)
+                container.load_objects(container.get_objects())
+                proxy = container.get_object(str(id(temp_module_for_test)))
+                self.assertEqual(proxy._coredumpy_type, "module")
+            finally:
+                sys.path.remove(tmpdir)
 
     def test_builtin_function(self):
         proxy = self.convert_object(abs)
