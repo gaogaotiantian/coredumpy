@@ -63,8 +63,9 @@ class TestPytest(TestBase):
                 import coredumpy
                 import pytest
                 import os
+                rootdir = os.path.dirname(__file__)
                 coredumpy.patch_pytest(directory={repr(dump_path)})
-                pytest.main([{repr(test_path)}])
+                pytest.main(["--rootdir", rootdir, {repr(test_path)}])
             """
             stdout, stderr = self.run_script(script)
             self.assertEqual(len(os.listdir(dump_path)), 2,
