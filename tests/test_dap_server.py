@@ -410,6 +410,7 @@ class TestDapServer(TestBase):
             self.assertEqual(script, source)
 
             frame_id = stack_frames[0]["id"]
+            self.assertLess(frame_id, 2 ** 31)
             scopes = self.do_scope(client, frame_id)
             self.assertEqual(len(scopes), 2)
 
@@ -417,6 +418,7 @@ class TestDapServer(TestBase):
             should_be_empty_scopes = self.do_scope(client, frame_id + 12345678)
             self.assertEqual(len(should_be_empty_scopes), 0)
 
+            self.assertLess(scopes[0]["variablesReference"], 2 ** 31)
             local_variables = self.do_variables(client, scopes[0]["variablesReference"])
             variable_names = set(var["name"] for var in local_variables)
             self.assertEqual(variable_names, {"arg", "p", "d"})
