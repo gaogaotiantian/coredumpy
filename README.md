@@ -51,6 +51,8 @@ import coredumpy
 coredumpy.patch_except(directory='./dumps')
 # Create a dump in "./dumps" when there's a unittest failure/error
 coredumpy.patch_unittest(directory='./dumps')
+# Create a dump in "./dumps" when there's a pytest failure/error
+coredumpy.patch_pytest(directory='./dumps')
 ```
 
 <details>
