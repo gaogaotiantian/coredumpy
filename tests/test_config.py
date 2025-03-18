@@ -1,6 +1,7 @@
 # Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
+import os
 import re
 
 from .base import TestBase
@@ -34,3 +35,21 @@ class TestConfig(TestBase):
         redacted = self.convert_object("test")
         self.assertNotEqual(redacted, "test")
         config.secret_patterns.remove(pattern)
+
+    def test_hide_environ(self):
+        from coredumpy import config
+        self.assertTrue(config.hide_environ)
+
+        all_environs = [val for val in os.environ.values() if len(val) > 8]
+        env = all_environs[0]
+        redacted = self.convert_object(env)
+        self.assertNotEqual(redacted, env)
+
+        config.hide_environ = False
+        non_redacted = self.convert_object(env)
+        self.assertEqual(non_redacted, env)
+        config.hide_environ = True
+
+        config.environ_filter = lambda env: False
+        non_redacted = self.convert_object(env)
+        self.assertEqual(non_redacted, env)
