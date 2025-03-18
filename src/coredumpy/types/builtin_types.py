@@ -59,13 +59,13 @@ class StrSupport(BasicTypeSupportBase):
 
     @classmethod
     def dump(cls, obj):
-        if config.hide_secret:
+        if config.hide_environ and obj in config.environ_values:
+            obj = "***redacted***"
+        elif config.hide_secret:
             for pattern in config.secret_patterns:
                 if pattern.match(obj):
                     obj = "***redacted***"
                     break
-        if config.hide_environ and obj in config.environ_values:
-            obj = "***redacted***"
         return super().dump(obj)
 
 
