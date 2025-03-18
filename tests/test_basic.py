@@ -38,6 +38,11 @@ class TestBasic(TestBase):
         self.assertIn("[3, {'a': [4, None]}]", stdout)
         self.assertIn("142857", stdout)
 
+    def test_module(self):
+        # Just a coverage test for running modules
+        stdout, _ = self.run_run(["-m", "calendar"])
+        self.assertIn("January", stdout)
+
     def test_simple_with_ipdb(self):
         script = """
             import coredumpy
