@@ -45,6 +45,9 @@ class TestConfig(TestBase):
         redacted = self.convert_object(env)
         self.assertNotEqual(redacted, env)
 
+        with self.assertRaises(ValueError):
+            config.hide_environ = 3
+
         config.hide_environ = False
         non_redacted = self.convert_object(env)
         self.assertEqual(non_redacted, env)
