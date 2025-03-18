@@ -115,6 +115,19 @@ class TestBasic(TestBase):
         self.assertIn("[3, <Unknown Object>]", stdout)
         self.assertIn("142857", stdout)
 
+    def test_frozen(self):
+        script = """
+            import importlib
+            importlib.import_module("nonexist")
+        """
+        stdout, _ = self.run_test(script, "coredumpy_dump", [
+            "w",
+            "ll"
+        ], use_cli_run=True)
+
+        self.assertIn("ModuleNotFoundError", stdout)
+        self.assertNotIn("could not get source", stdout)
+
     def test_directory(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             child_dir = os.path.join(tmpdir, "child")

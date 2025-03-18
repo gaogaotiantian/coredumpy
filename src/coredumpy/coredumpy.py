@@ -203,6 +203,8 @@ class Coredumpy:
                 f = f.f_back  # type: ignore
             all_frames.update(frames)
 
+        frozen_mapping = {}
+
         if current_thread is None:
             # We dumped some frame that's not in any thread, make up one
             threads[0] = frame
@@ -211,6 +213,8 @@ class Coredumpy:
                 filename = frame.f_code.co_filename
                 if filename not in files:
                     files.add(filename)
+                    if filename.startswith("<frozen "):
+                        frozen_mapping[filename] = frame.f_globals.get("__file__")
                 all_frames.add(frame)
                 frame = frame.f_back
 
@@ -222,6 +226,11 @@ class Coredumpy:
             if os.path.exists(filename):
                 with tokenize.open(filename) as fio:
                     file_lines[filename] = fio.readlines()
+            elif filename.startswith("<frozen "):
+                module_path = frozen_mapping.get(filename)
+                if module_path and os.path.exists(module_path):
+                    with tokenize.open(module_path) as fio:
+                        file_lines[filename] = fio.readlines()
 
         ret = json.dumps({
             "objects": container.get_objects(),
