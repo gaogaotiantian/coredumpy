@@ -3,6 +3,7 @@
 
 import queue
 
+from .config import config
 from .types import builtin_types  # noqa: F401
 from .type_support import TypeSupportManager, NotReady
 from .py_object_proxy import PyObjectProxy, _unknown
@@ -23,26 +24,27 @@ class PyObjectContainer:
 
     def add_objects(self, objs, depth=None):
         TypeSupportManager.load_lazy_supports()
-        objects = {}
-        curr_recursion_depth = 0
-        pending_objects = list(objs)
-        if depth is None:
-            depth = self._max_recursion_depth
-        while curr_recursion_depth < depth and pending_objects:
-            next_objects = {}
-            for o in pending_objects:
-                data, new_objects = TypeSupportManager.dump(o)
-                objects[str(id(o))] = data
-                # To avoid repeated object ids, we keep a reference to all
-                # objects in the container
-                self._objects_holder[str(id(o))] = o
-                if new_objects:
-                    for new_obj in new_objects:
-                        if str(id(new_obj)) not in objects:
-                            next_objects[str(id(new_obj))] = new_obj
-            curr_recursion_depth += 1
-            pending_objects = list(next_objects.values())
-        self._objects.update(objects)
+        with config.dump_context():
+            objects = {}
+            curr_recursion_depth = 0
+            pending_objects = list(objs)
+            if depth is None:
+                depth = self._max_recursion_depth
+            while curr_recursion_depth < depth and pending_objects:
+                next_objects = {}
+                for o in pending_objects:
+                    data, new_objects = TypeSupportManager.dump(o)
+                    objects[str(id(o))] = data
+                    # To avoid repeated object ids, we keep a reference to all
+                    # objects in the container
+                    self._objects_holder[str(id(o))] = o
+                    if new_objects:
+                        for new_obj in new_objects:
+                            if str(id(new_obj)) not in objects:
+                                next_objects[str(id(new_obj))] = new_obj
+                curr_recursion_depth += 1
+                pending_objects = list(next_objects.values())
+            self._objects.update(objects)
         return [self._objects[str(id(obj))] for obj in objs]
 
     def add_object(self, obj, depth=None):

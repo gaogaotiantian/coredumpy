@@ -194,7 +194,9 @@ dymanic features.
 ### Security concerns
 
 Because coredumpy dumps the whole frame stack, you should take care of your
-sensitive information, for example, API keys.
+sensitive information.
+
+#### API Keys
 
 coredumpy has a default-on filter for strings that looks like API keys
 (`"[A-Za-z0-9]{32,1024}"`), but if you know what your key looks like,
@@ -214,6 +216,25 @@ If you need to turn off this feature:
 from coredumpy import config
 config.hide_secret = False
 ```
+
+#### Environs
+
+It's common to store sensitive data in your environment variables, so coredumpy
+also has a default-on filter for environs. It will redact all strings if they
+are in `os.environ` and their length > 8. You can change the filter by
+
+```python
+from coredumpy import config
+# Only redact if the length > 16
+config.environ_filter = lambda env: len(env) > 16
+```
+
+Turn this filter off with
+```python
+from coredumpy import config
+config.hide_environ = False
+```
+
 
 ## License
 
