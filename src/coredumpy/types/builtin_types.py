@@ -64,7 +64,7 @@ class StrSupport(BasicTypeSupportBase):
                 if pattern.match(obj):
                     obj = "***redacted***"
                     break
-        if config.hide_environ and obj in config._environ_values:
+        if config.hide_environ and obj in config.environ_values:
             obj = "***redacted***"
         return super().dump(obj)
 

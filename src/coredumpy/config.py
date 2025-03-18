@@ -44,6 +44,10 @@ class _Config:
             raise ValueError("hide_secret must be a boolean value.")
         self._hide_environ = value
 
+    @property
+    def environ_values(self) -> set[str]:
+        return self._environ_values
+
     @contextlib.contextmanager
     def dump_context(self):
         self._environ_values = set(env for env in os.environ.values() if self.environ_filter(env))
