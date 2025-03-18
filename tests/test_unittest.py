@@ -36,8 +36,17 @@ class TestUnittest(TestBase):
 
     def test_unittest_with_cli(self):
         with tempfile.TemporaryDirectory() as tempdir:
-            stdout, stderr = self.run_run(["-m", "unittest", "tests.data.failed",
-                                           "--directory", tempdir])
+            # We don't want to use tests as module because it will conflict
+            # with the coredumpy setup for the tests. So we change the cwd
+            # here to use data.failed as a module.
+            cwd = os.getcwd()
+            try:
+                base_dir = os.path.dirname(__file__)
+                os.chdir(base_dir)
+                stdout, stderr = self.run_run(["-m", "unittest", "data.failed",
+                                               "--directory", tempdir])
+            finally:
+                os.chdir(cwd)
             self.assertIn("FAIL: test_bool", stderr)
             self.assertIn("FAIL: test_eq", stderr)
             self.assertIn("ERROR: test_error", stderr)
