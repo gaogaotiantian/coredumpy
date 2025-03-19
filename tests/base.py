@@ -19,7 +19,7 @@ class TestBase(unittest.TestCase):
     def run_test(self, script, dumppath, commands, use_cli_run=False, debugger="pdb"):
         script = textwrap.dedent(script)
         with tempfile.TemporaryDirectory() as tmpdir:
-            with open(f"{tmpdir}/script.py", "w") as f:
+            with open(f"{tmpdir}/script.py", "w", encoding="utf-8") as f:
                 f.write(script)
             if use_cli_run:
                 subprocess.run(normalize_commands(["coredumpy", "run", f"{tmpdir}/script.py", "--path", dumppath]),
@@ -53,7 +53,7 @@ class TestBase(unittest.TestCase):
     def run_script(self, script, expected_returncode=0):
         script = textwrap.dedent(script)
         with tempfile.TemporaryDirectory() as tmpdir:
-            with open(f"{tmpdir}/script.py", "w") as f:
+            with open(f"{tmpdir}/script.py", "w", encoding="utf-8") as f:
                 f.write(script)
             process = subprocess.Popen(normalize_commands([sys.executable, f"{tmpdir}/script.py"]),
                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
