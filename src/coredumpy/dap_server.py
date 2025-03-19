@@ -201,7 +201,7 @@ class DebugAdapterHandler(threading.Thread):
 
         except Exception as e:
             if sys.version_info < (3, 10):
-                extra = "".join(traceback.format_exception(type(e), e))
+                extra = "".join(traceback.format_exception(type(e), e, e.__traceback__))
             else:
                 extra = "".join(traceback.format_exception(e))
             self.send_error_response(message, extra)
