@@ -82,11 +82,24 @@ class DapClient:
     def send_message(self, message):
         """Serialize and send a DAP message with the required headers."""
         assert self.sock is not None, "Socket is not connected"
-        json_message = json.dumps(message)
+        json_message = json.dumps(message, ensure_ascii=False)
         content_bytes = json_message.encode("utf-8")
         header = f"Content-Length: {len(content_bytes)}\r\n\r\n"
         self.sock.sendall(header.encode("utf-8") + content_bytes)
         self.seq += 1
+
+    def send_messages(self, messages):
+        """Send multiple DAP messages in one go."""
+        assert self.sock is not None, "Socket is not connected"
+        data = b""
+        for message in messages:
+            # ensure_ascii=False to simulate how VSCode works
+            json_message = json.dumps(message, ensure_ascii=False)
+            content_bytes = json_message.encode("utf-8")
+            header = f"Content-Length: {len(content_bytes)}\r\n\r\n"
+            data += header.encode("utf-8") + content_bytes
+            self.seq += 1
+        self.sock.sendall(data)
 
     def receive_messages(self):
         """Continuously read and process DAP messages from the socket."""
@@ -162,6 +175,33 @@ class DapClient:
             }
         }
         self.send_message(launch_request)
+
+    def send_launch_continue(self, dump_path):
+        """Send a 'launch' request and a 'continue' request to the DAP server."""
+        launch_request = {
+            "type": "request",
+            "seq": self.seq,
+            "command": "launch",
+            "arguments": {
+                "name": "coredumpy",
+                "type": "python",
+                "request": "launch",
+                "program": dump_path,
+                "cwd": "",
+                "env": {},
+                "console": "internalConsole"
+            }
+        }
+
+        continue_request = {
+            "type": "request",
+            "seq": self.seq + 1,
+            "command": "continue",
+            "arguments": {
+                "threadId": 1
+            }
+        }
+        self.send_messages([launch_request, continue_request])
 
     def send_threads(self):
         """Send a 'threads' request to the DAP server."""
@@ -305,6 +345,17 @@ class TestDapServer(TestBase):
 
     def do_launch(self, client: DapClient, path):
         client.send_launch(path)
+        message = client.get_message()
+        self.assertTrue(message["success"])
+        message = client.get_message()
+        self.assertEqual(message["event"], "stopped")
+
+    def do_launch_continue(self, client: DapClient, path):
+        client.send_launch_continue(path)
+        message = client.get_message()
+        self.assertTrue(message["success"])
+        message = client.get_message()
+        self.assertEqual(message["event"], "stopped")
         message = client.get_message()
         self.assertTrue(message["success"])
         message = client.get_message()
@@ -544,7 +595,7 @@ class TestDapServer(TestBase):
             """)
             self.run_script(script)
             self.do_initialize(client)
-            self.do_launch(client, path)
+            self.do_launch_continue(client, path)
             threads = self.do_threads(client)
             self.assertEqual(len(threads), 1)
             stack_frames = self.do_stack_trace(client, threads[0]["id"])
