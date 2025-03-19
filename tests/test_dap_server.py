@@ -29,12 +29,11 @@ class DapServer:
             normalize_commands(["coredumpy", "host"]),
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            encoding="utf-8"
+            stderr=subprocess.DEVNULL
         )
         line = self._process.stdout.readline()
         line = self._process.stdout.readline()
-        if "listening for connections" not in line:
+        if b"listening for connections" not in line:
             self._process.terminate()
             self._process.wait()
             raise RuntimeError("Failed to start DAP server")
