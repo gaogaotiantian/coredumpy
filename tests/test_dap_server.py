@@ -530,6 +530,29 @@ class TestDapServer(TestBase):
 
             self.do_disconnect(client)
 
+    def test_unicode_file(self):
+        # Make sure the server does not crash if we send a unicode file
+        with PrepareDapTest() as info:
+            tmpdir, server, client = info
+            path = os.path.join(tmpdir, "dump文件")
+            script = textwrap.dedent(f"""
+                import coredumpy
+                def f():
+                    x = 142857
+                    coredumpy.dump(path={repr(path)})
+                f()
+            """)
+            self.run_script(script)
+            self.do_initialize(client)
+            self.do_launch(client, path)
+            threads = self.do_threads(client)
+            self.assertEqual(len(threads), 1)
+            stack_frames = self.do_stack_trace(client, threads[0]["id"])
+            self.assertGreaterEqual(len(stack_frames), 2)
+            x = self.get_local_variable_from_frame(client, stack_frames[0]["id"], "x")
+            self.assertEqual(x, "142857")
+            self.do_disconnect(client)
+
     def test_launch_invalid_file(self):
         # Make sure the server does not crash if we send an invalid file
         with PrepareDapTest() as info:
