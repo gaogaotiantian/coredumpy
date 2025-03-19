@@ -25,6 +25,7 @@ class DebugAdapterServer:
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.running = True
         self.client_threads: List[DebugAdapterHandler] = []
+        sys.stdout.reconfigure(encoding='utf-8')  # type: ignore
 
     def start(self):
         try:
@@ -87,28 +88,28 @@ class DebugAdapterHandler(threading.Thread):
 
     def run(self):
         print("[Client] Client handler started", flush=True)
-        buffer = ""
+        buffer = b""
         while self.running:
             try:
                 self.client.settimeout(0.5)
                 try:
-                    data = self.client.recv(4096).decode('utf-8')
+                    data = self.client.recv(4096)
                     if not data:
                         break
 
                     buffer += data
-                    while '\r\n\r\n' in buffer:
-                        header, rest = buffer.split('\r\n\r\n', 1)
+                    while b'\r\n\r\n' in buffer:
+                        header, rest = buffer.split(b'\r\n\r\n', 1)
                         content_length = 0
 
-                        for line in header.split('\r\n'):
-                            if line.startswith('Content-Length: '):
-                                content_length = int(line.split(': ')[1])
+                        for line in header.split(b'\r\n'):
+                            if line.startswith(b'Content-Length: '):
+                                content_length = int(line.split(b': ')[1])
 
                         if len(rest) >= content_length:
                             content = rest[:content_length]
                             buffer = rest[content_length:]
-                            self.process_message(json.loads(content))
+                            self.process_message(json.loads(content.decode("utf-8")))
                         else:
                             break
                 except socket.timeout:  # pragma: no cover
@@ -200,7 +201,11 @@ class DebugAdapterHandler(threading.Thread):
                     self.send_response(message, {})
 
         except Exception as e:
-            self.send_error_response(message, str(e))
+            if sys.version_info < (3, 10):
+                extra = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            else:
+                extra = "".join(traceback.format_exception(e))
+            self.send_error_response(message, extra)
 
     def send_message(self, message: Dict[str, Any]):
         print("[Client] Sending message:", message, flush=True)
