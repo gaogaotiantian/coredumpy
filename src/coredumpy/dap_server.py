@@ -25,6 +25,7 @@ class DebugAdapterServer:
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.running = True
         self.client_threads: List[DebugAdapterHandler] = []
+        sys.stdout.reconfigure(encoding='utf-8')  # type: ignore
 
     def start(self):
         try:
