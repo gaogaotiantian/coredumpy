@@ -87,28 +87,28 @@ class DebugAdapterHandler(threading.Thread):
 
     def run(self):
         print("[Client] Client handler started", flush=True)
-        buffer = b""
+        buffer = ""
         while self.running:
             try:
                 self.client.settimeout(0.5)
                 try:
-                    data = self.client.recv(4096)
+                    data = self.client.recv(4096).decode('utf-8')
                     if not data:
                         break
 
                     buffer += data
-                    while b'\r\n\r\n' in buffer:
-                        header, rest = buffer.split(b'\r\n\r\n', 1)
+                    while '\r\n\r\n' in buffer:
+                        header, rest = buffer.split('\r\n\r\n', 1)
                         content_length = 0
 
-                        for line in header.split(b'\r\n'):
-                            if line.startswith(b'Content-Length: '):
-                                content_length = int(line.split(b': ')[1])
+                        for line in header.split('\r\n'):
+                            if line.startswith('Content-Length: '):
+                                content_length = int(line.split(': ')[1])
 
                         if len(rest) >= content_length:
                             content = rest[:content_length]
                             buffer = rest[content_length:]
-                            self.process_message(json.loads(content.decode("utf-8")))
+                            self.process_message(json.loads(content))
                         else:
                             break
                 except socket.timeout:  # pragma: no cover
