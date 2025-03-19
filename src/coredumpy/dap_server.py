@@ -200,7 +200,11 @@ class DebugAdapterHandler(threading.Thread):
                     self.send_response(message, {})
 
         except Exception as e:
-            self.send_error_response(message, str(e))
+            if sys.version_info < (3, 10):
+                extra = "".join(traceback.format_exception_only(type(e), e))
+            else:
+                extra = "".join(traceback.format_exception_only(e))
+            self.send_error_response(message, extra)
 
     def send_message(self, message: Dict[str, Any]):
         print("[Client] Sending message:", message, flush=True)
