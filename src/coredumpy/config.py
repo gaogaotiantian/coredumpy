@@ -50,7 +50,8 @@ class _Config:
 
     @contextlib.contextmanager
     def dump_context(self):
-        self._environ_values = set(env for env in os.environ.values() if self.environ_filter(env))
+        if self.hide_environ:
+            self._environ_values = set(env for env in os.environ.values() if self.environ_filter(env))
         yield
         self._environ_values = set()
 
