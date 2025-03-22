@@ -346,7 +346,7 @@ class CoredumpyDebugger:
         if source_reference not in self.sid_to_file:
             return 'source code unavailable'
         filename = self.sid_to_file[source_reference]
-        return self.files.get(filename, 'source code unavailable??')
+        return self.files.get(filename, 'source code unavailable')
 
     def get_scopes(self, frame_id: int) -> List[Dict[str, Any]]:
         frame = self.id_adapter.rid_to_object(frame_id)
