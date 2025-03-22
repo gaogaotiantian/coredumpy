@@ -36,6 +36,9 @@ class TestConfig(TestBase):
         self.assertNotEqual(redacted, "test")
         config.secret_patterns.remove(pattern)
 
+        with self.assertRaises(ValueError):
+            config.secret_patterns = 3
+
     def test_hide_environ(self):
         from coredumpy import config
         self.assertTrue(config.hide_environ)
