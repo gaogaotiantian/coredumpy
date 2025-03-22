@@ -4,9 +4,16 @@
 import contextlib
 import os
 import re
+from types import GenericAlias
+from typing import Callable
 
 
 class _Config:
+    hide_secret: bool
+    secret_patterns: list[re.Pattern]
+    hide_environ: bool
+    environ_filter: Callable
+
     def __init__(self) -> None:
         self.hide_secret = True
         self.secret_patterns = [
@@ -16,33 +23,16 @@ class _Config:
         self._environ_values: set[str] = set()
         self.environ_filter = lambda env: len(env) > 8
 
-    @property
-    def hide_secret(self) -> bool:
-        return self._hide_secret
-
-    @hide_secret.setter
-    def hide_secret(self, value: bool) -> None:
-        if not isinstance(value, bool):
-            raise ValueError("hide_secret must be a boolean value.")
-        self._hide_secret = value
-
-    @property
-    def secret_patterns(self) -> list[re.Pattern]:
-        return self._secret_patterns
-
-    @secret_patterns.setter
-    def secret_patterns(self, patterns: list[re.Pattern]) -> None:
-        self._secret_patterns = patterns[:]
-
-    @property
-    def hide_environ(self) -> bool:
-        return self._hide_environ
-
-    @hide_environ.setter
-    def hide_environ(self, value: bool) -> None:
-        if not isinstance(value, bool):
-            raise ValueError("hide_secret must be a boolean value.")
-        self._hide_environ = value
+    def __setattr__(self, name: str, value: object) -> None:
+        annotated_type = self.__annotations__.get(name)
+        if annotated_type is not None:
+            if isinstance(annotated_type, GenericAlias):
+                # Handle generic types like List, Dict, etc.
+                if not isinstance(value, annotated_type.__origin__):
+                    raise ValueError(f"Expected type {annotated_type} for {name}, got {type(value)}")
+            elif not isinstance(value, annotated_type):
+                raise ValueError(f"Expected type {annotated_type} for {name}, got {type(value)}")
+        super().__setattr__(name, value)
 
     @property
     def environ_values(self) -> set[str]:
