@@ -164,7 +164,6 @@ class Coredumpy:
         @return:
             The string of the dump
         """
-        files = set()
         if frame is None:
             inner_frame = inspect.currentframe()
             assert inner_frame is not None
@@ -179,6 +178,21 @@ class Coredumpy:
         # So we need to add 2 to the depth
         if depth is not None:
             depth = depth + 2
+
+        files = {}
+
+        def add_file(frame):
+            filename = frame.f_code.co_filename
+            if filename not in files:
+                files[filename] = None
+                real_filename = filename
+                if filename.startswith("<frozen "):
+                    real_filename = frame.f_globals.get("__file__")
+                    if not real_filename:  # pragma: no cover
+                        return
+                if os.path.exists(real_filename):
+                    with tokenize.open(real_filename) as fio:
+                        files[filename] = fio.readlines()
 
         threads = {}
         thread_names = {}
@@ -199,40 +213,20 @@ class Coredumpy:
                         frames = []
                         current_thread = thread_id
                     frames.append(f)
-                    filename = f.f_code.co_filename
-                    if filename not in files:
-                        files.add(filename)
+                    add_file(f)
                     f = f.f_back  # type: ignore
                 all_frames.update(frames)
-
-        frozen_mapping = {}
 
         if current_thread is None:
             # We dumped some frame that's not in any thread, make up one
             threads[0] = frame
             current_thread = 0
             while frame:
-                filename = frame.f_code.co_filename
-                if filename not in files:
-                    files.add(filename)
-                    if filename.startswith("<frozen "):
-                        frozen_mapping[filename] = frame.f_globals.get("__file__")
                 all_frames.add(frame)
+                add_file(frame)
                 frame = frame.f_back
 
         container.add_objects(all_frames, depth)
-
-        file_lines = {}
-
-        for filename in files:
-            if os.path.exists(filename):
-                with tokenize.open(filename) as fio:
-                    file_lines[filename] = fio.readlines()
-            elif filename.startswith("<frozen "):
-                module_path = frozen_mapping.get(filename)
-                if module_path and os.path.exists(module_path):
-                    with tokenize.open(module_path) as fio:
-                        file_lines[filename] = fio.readlines()
 
         ret = json.dumps({
             "objects": container.get_objects(),
@@ -244,7 +238,7 @@ class Coredumpy:
                 for thread_id, f in threads.items()
             },
             "current_thread": str(current_thread),
-            "files": file_lines,
+            "files": {file: lines for file, lines in files.items() if lines is not None},
             "description": description,
             "metadata": cls.get_metadata()
         })
