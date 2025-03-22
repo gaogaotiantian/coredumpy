@@ -188,7 +188,7 @@ class Coredumpy:
                 real_filename = filename
                 if filename.startswith("<frozen "):
                     real_filename = frame.f_globals.get("__file__")
-                    if not real_filename:
+                    if not real_filename:  # pragma: no cover
                         return
                 if os.path.exists(real_filename):
                     with tokenize.open(real_filename) as fio:
