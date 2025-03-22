@@ -655,6 +655,13 @@ class TestDapServer(TestBase):
             self.assertEqual(len(threads), 1)
             stack_frames = self.do_stack_trace(client, threads[0]["id"])
             self.assertGreaterEqual(len(stack_frames), 2)
+            source = stack_frames[0]["source"]
+            self.assertEqual(source["sourceReference"], 0)
+            self.assertEqual(source["presentationHint"], "deemphasize")
+
+            content = self.do_source(client, source["sourceReference"])
+            self.assertIn("unavailable", content)
+
             x = self.get_local_variable_from_frame(client, stack_frames[0]["id"], "x")
             self.assertEqual(x, "142857")
             self.do_disconnect(client)
