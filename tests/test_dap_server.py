@@ -642,9 +642,10 @@ class TestDapServer(TestBase):
         with PrepareDapTest() as info:
             tmpdir, server, client = info
             path = os.path.join(tmpdir, "coredumpy_dump")
+            code = f"x=142857; coredumpy.dump(path={repr(path)})"
             script = textwrap.dedent(f"""
                 import coredumpy
-                code = "x=142857; coredumpy.dump(path={repr(path)})"
+                code = {repr(code)}
                 exec(code)
             """)
             self.run_script(script)
