@@ -164,7 +164,6 @@ class Coredumpy:
         @return:
             The string of the dump
         """
-        files = set()
         if frame is None:
             inner_frame = inspect.currentframe()
             assert inner_frame is not None
