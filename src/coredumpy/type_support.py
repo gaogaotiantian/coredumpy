@@ -5,6 +5,7 @@
 import abc
 import inspect
 import types
+import warnings
 from typing import Callable, Optional, Union
 
 from .py_object_proxy import PyObjectProxy
@@ -119,10 +120,13 @@ class TypeSupportManager:
             return data, None
         try:
             data["attrs"] = {}
-            for attr, value in inspect.getmembers(obj):
-                if not attr.startswith("__") and not callable(value):
-                    new_objects.append(value)
-                    data["attrs"][attr] = str(id(value))
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                # ignore warnings from inspect.getmembers
+                for attr, value in inspect.getmembers(obj):
+                    if not attr.startswith("__") and not callable(value):
+                        new_objects.append(value)
+                        data["attrs"][attr] = str(id(value))
         except Exception:  # pragma: no cover
             # inspect.getmembers may fail on some objects
             pass
