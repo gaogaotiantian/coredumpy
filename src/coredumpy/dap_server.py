@@ -2,6 +2,7 @@
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
 import json
+import os
 import signal
 import socket
 import sys
@@ -304,7 +305,7 @@ class CoredumpyDebugger:
         assert isinstance(self.container, PyObjectContainer)
         for oid, proxy in self.container._proxies.items():
             self.id_adapter.add(proxy, oid)
-        for sid, filename in enumerate(self.files):
+        for sid, filename in enumerate(self.files, 1):
             self.file_to_sid[filename] = sid
             self.sid_to_file[sid] = filename
             self.files[filename] = ''.join(self.files[filename])
@@ -314,11 +315,12 @@ class CoredumpyDebugger:
             self.frame_stacks[thread] = []
             frame: FrameType = self.threads[thread]["frame"]
             while frame:
-                source: Dict[str, Any]
-                if frame.f_code.co_filename not in self.file_to_sid:
-                    source = {'path': frame.f_code.co_filename}
-                else:
-                    source = {'sourceReference': self.file_to_sid[frame.f_code.co_filename]}
+                source_reference = self.file_to_sid.get(frame.f_code.co_filename, 0)
+                source = {
+                    'path': os.path.basename(frame.f_code.co_filename),
+                    'sourceReference': source_reference,
+                    'presentationHint': 'normal' if source_reference != 0 else 'deemphasize'
+                }
                 self.frame_stacks[thread].append({
                     'id': self.id_adapter.object_to_rid(frame),
                     'name': frame.f_code.co_name,
@@ -341,8 +343,10 @@ class CoredumpyDebugger:
         return self.frame_stacks.get(str(thread_id), [])
 
     def get_source(self, source_reference: int) -> str:
+        if source_reference not in self.sid_to_file:
+            return 'source code unavailable'
         filename = self.sid_to_file[source_reference]
-        return self.files.get(filename, '')
+        return self.files.get(filename, 'source code unavailable')
 
     def get_scopes(self, frame_id: int) -> List[Dict[str, Any]]:
         frame = self.id_adapter.rid_to_object(frame_id)
