@@ -581,6 +581,40 @@ class TestDapServer(TestBase):
 
             self.do_disconnect(client)
 
+    def test_multithreading_without_dump_all_threads(self):
+        with PrepareDapTest() as info:
+            tmpdir, server, client = info
+            path = os.path.join(tmpdir, "coredumpy_dump")
+            script = textwrap.dedent(f"""
+                import coredumpy
+                import queue
+                import threading
+                coredumpy.config.dump_all_threads = False
+
+                def worker(q_in, q_out):
+                    s = "hello"
+                    q_out.put(s)
+                    q_in.get()
+
+                def main():
+                    q_in = queue.Queue()
+                    q_out = queue.Queue()
+                    thread = threading.Thread(target=worker, args=(q_in, q_out))
+                    thread.start()
+                    r = q_out.get()
+                    coredumpy.dump(path={repr(path)})
+                    q_in.put("world")
+                    thread.join()
+
+                main()
+            """)
+            self.run_script(script)
+            self.do_initialize(client)
+            self.do_launch(client, path)
+            threads = self.do_threads(client)
+            self.assertEqual(len(threads), 1)
+            self.do_disconnect(client)
+
     def test_unicode_file(self):
         # Make sure the server does not crash if we send a unicode file
         with PrepareDapTest() as info:

@@ -87,7 +87,7 @@ class TestTypeSupport(TestBase):
 
         obj = A()
         proxy = self.convert_object(obj)
-        for i in range(50):
+        for i in range(9):
             self.assertIn("A", proxy._coredumpy_type)
             proxy = proxy.parent
 

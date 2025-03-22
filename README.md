@@ -114,6 +114,27 @@ coredumpy peek <your_dump_file1> <your_dump_file2>
 Download the [VSCode Extension](https://marketplace.visualstudio.com/items?itemName=gaogaotiantian.coredumpy-vscode)
 and right click your dump file - choose `Load with coredumpy`.
 
+### Configuration
+
+All configurations should be done through `coredumpy.config`.
+The default value is listed below and you can change them as you need.
+
+```python
+from coredumpy import config
+# The dump depth if not specified
+config.default_recursion_depth: int = 10
+# Whether dump all threads
+config.dump_all_threads: bool = True
+# Whether hide strings that match config.secret_patterns
+config.hide_secret: bool = True
+# The patterns for secrets
+config.secret_patterns: list[re.Pattern] = [re.compile(r"[A-Za-z0-9]{32,1024}")]
+# Whether hide strings that match os.environ.values()
+config.hide_environ: bool = True
+# The filter to determine whether an environ should be hidden
+config.environ_filter: Callable = lambda env: len(env) > 8
+```
+
 ## Type support
 
 `coredumpy` supports the common built-in types like `float`, `int`, `str`, `list`,

@@ -10,8 +10,6 @@ from .py_object_proxy import PyObjectProxy, _unknown
 
 
 class PyObjectContainer:
-    _max_recursion_depth = 100
-
     def __init__(self):
         self._objects = {}
         self._objects_holder = {}
@@ -29,7 +27,7 @@ class PyObjectContainer:
             curr_recursion_depth = 0
             pending_objects = list(objs)
             if depth is None:
-                depth = self._max_recursion_depth
+                depth = config.default_recursion_depth
             while curr_recursion_depth < depth and pending_objects:
                 next_objects = {}
                 for o in pending_objects:

@@ -17,6 +17,7 @@ import types
 from types import CodeType, FrameType
 from typing import Callable, Literal, Optional, Union
 
+from .config import config
 from .patch import patch_all
 from .py_object_container import PyObjectContainer
 from .utils import get_dump_filename
@@ -183,25 +184,26 @@ class Coredumpy:
         thread_names = {}
         all_frames = set()
         current_thread = None
-        for thread in threading.enumerate():
-            thread_names[thread.ident] = thread.name
+        if config.dump_all_threads:
+            for thread in threading.enumerate():
+                thread_names[thread.ident] = thread.name
 
-        for thread_id, f in sys._current_frames().items():
-            frames: list[FrameType]
-            frames = []
-            threads[thread_id] = f
-            while f:
-                if f == frame:
-                    # This is the specified frame
-                    threads[thread_id] = f
-                    frames = []
-                    current_thread = thread_id
-                frames.append(f)
-                filename = f.f_code.co_filename
-                if filename not in files:
-                    files.add(filename)
-                f = f.f_back  # type: ignore
-            all_frames.update(frames)
+            for thread_id, f in sys._current_frames().items():
+                frames: list[FrameType]
+                frames = []
+                threads[thread_id] = f
+                while f:
+                    if f == frame:
+                        # This is the specified frame
+                        threads[thread_id] = f
+                        frames = []
+                        current_thread = thread_id
+                    frames.append(f)
+                    filename = f.f_code.co_filename
+                    if filename not in files:
+                        files.add(filename)
+                    f = f.f_back  # type: ignore
+                all_frames.update(frames)
 
         frozen_mapping = {}
 

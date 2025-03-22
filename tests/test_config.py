@@ -4,17 +4,17 @@
 import os
 import re
 
+from coredumpy import config
+
 from .base import TestBase
 
 
 class TestConfig(TestBase):
     def test_config_object(self):
-        from coredumpy import config
         from coredumpy.config import _Config
         self.assertIsInstance(config, _Config)
 
     def test_hide_secret(self):
-        from coredumpy import config
         self.assertTrue(config.hide_secret)
 
         # this looks like an API key
@@ -40,7 +40,6 @@ class TestConfig(TestBase):
             config.secret_patterns = 3
 
     def test_hide_environ(self):
-        from coredumpy import config
         self.assertTrue(config.hide_environ)
 
         all_environs = [val for val in os.environ.values() if len(val) > 8]
@@ -59,3 +58,15 @@ class TestConfig(TestBase):
         config.environ_filter = lambda env: False
         non_redacted = self.convert_object(env)
         self.assertEqual(non_redacted, env)
+
+    def test_default_recursion_depth(self):
+        prev_recursion_depth = config.default_recursion_depth
+        try:
+            config.default_recursion_depth = 1
+
+            data = [[1]]
+            converted = self.convert_object(data)
+
+            self.assertNotEqual(converted, data)
+        finally:
+            config.default_recursion_depth = prev_recursion_depth
