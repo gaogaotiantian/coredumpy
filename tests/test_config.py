@@ -77,7 +77,7 @@ class TestConfig(TestBase):
             # Okay this is a bit of a hack, but we want to test the timeout
             config.dump_timeout = 0
 
-            data = [[1]]
+            data = [["1"] * 1000, [[1]]]
             converted = self.convert_object(data)
 
             self.assertNotEqual(converted, data)
