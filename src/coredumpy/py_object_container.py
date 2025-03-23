@@ -29,7 +29,7 @@ class PyObjectContainer:
             pending_objects = list(objs)
             if depth is None:
                 depth = config.default_recursion_depth
-            start_time = time.time()
+            start_time = time.perf_counter()
             while curr_recursion_depth < depth and pending_objects:
                 next_objects = {}
                 for o in pending_objects:
@@ -44,7 +44,7 @@ class PyObjectContainer:
                                 next_objects[str(id(new_obj))] = new_obj
                 curr_recursion_depth += 1
                 pending_objects = list(next_objects.values())
-                if time.time() - start_time > config.dump_timeout:
+                if time.perf_counter() - start_time > config.dump_timeout:
                     break
             self._objects.update(objects)
         return [self._objects[str(id(obj))] for obj in objs]
