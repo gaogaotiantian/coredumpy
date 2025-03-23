@@ -4,6 +4,7 @@
 
 import argparse
 import os
+import runpy
 
 from .coredumpy import load, peek, run, host
 
@@ -16,18 +17,24 @@ def main():
     subparsers_run.add_argument("-m", metavar="module", dest="module")
     subparsers_run.add_argument("--path", help="The path of dump file", default=None)
     subparsers_run.add_argument("--directory", help="The directory of dump file", default=None)
+    subparsers_run.add_argument("--conf", help="The startup configuration file to run", default=None)
     subparsers_run.add_argument("args", nargs="*")
 
     subparsers_load = subparsers.add_parser("load", help="Load a dump file.")
     subparsers_load.add_argument("file", type=str, help="The dump file to load.")
     subparsers_load.add_argument("--ipdb", action="store_true", help="Use ipdb as the debugger.")
+    subparsers_load.add_argument("--conf", help="The startup configuration file to run", default=None)
 
     subparsers_peek = subparsers.add_parser("peek", help="Peek a dump file.")
     subparsers_peek.add_argument("files", help="The dump file to load.", nargs="+")
 
-    subparsers_peek = subparsers.add_parser("host", help="Host a DAP server.")
+    subparsers_host = subparsers.add_parser("host", help="Host a DAP server.")
+    subparsers_host.add_argument("--conf", help="The startup configuration file to run", default=None)
 
     args = parser.parse_args()
+
+    if hasattr(args, "conf") and args.conf and os.path.exists(args.conf):
+        runpy.run_path(args.conf)
 
     if args.command == "load":
         if os.path.exists(args.file):
