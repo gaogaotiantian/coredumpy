@@ -123,6 +123,8 @@ The default value is listed below and you can change them as you need.
 from coredumpy import config
 # The dump depth if not specified
 config.default_recursion_depth: int = 10
+# Best effort timeout for dump - not guaranteed. Only checked for each new depth.
+config.dump_timeout: int = 60
 # Whether dump all threads
 config.dump_all_threads: bool = True
 # Whether hide strings that match config.secret_patterns

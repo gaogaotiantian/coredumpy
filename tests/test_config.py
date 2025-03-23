@@ -70,3 +70,16 @@ class TestConfig(TestBase):
             self.assertNotEqual(converted, data)
         finally:
             config.default_recursion_depth = prev_recursion_depth
+
+    def test_dump_timeout(self):
+        prev_timeout = config.dump_timeout
+        try:
+            # Okay this is a bit of a hack, but we want to test the timeout
+            config.dump_timeout = 0
+
+            data = [["1"] * 1000, [[1]]]
+            converted = self.convert_object(data)
+
+            self.assertNotEqual(converted, data)
+        finally:
+            config.dump_timeout = prev_timeout

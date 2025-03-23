@@ -10,6 +10,7 @@ from typing import Callable
 
 class _Config:
     default_recursion_depth: int
+    dump_timeout: int
     dump_all_threads: bool
     hide_secret: bool
     secret_patterns: list[re.Pattern]
@@ -18,6 +19,7 @@ class _Config:
 
     def __init__(self) -> None:
         self.default_recursion_depth = 10
+        self.dump_timeout = 60
         self.dump_all_threads = True
         self.hide_secret = True
         self.secret_patterns = [
