@@ -195,6 +195,9 @@ a way to run an arbitrary script after importing `coredumpy`. You can put a
 `conf_coredumpy.py` file in your current working directory. If `coredumpy` discovers
 it, the script will be executed. You can put anything you need in the script.
 
+Or if you prefer to do it explicitly, you can pass `--conf your_conf_file.py` to
+`coredumpy run` or `coredumpy load` command to run that specified file.
+
 ## About the data
 
 Besides a couple of builtin types, coredumpy treats almost every object as an
