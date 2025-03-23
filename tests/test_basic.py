@@ -173,6 +173,23 @@ class TestBasic(TestBase):
             finally:
                 os.chdir(cwd)
 
+    def test_conf_option(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with open(os.path.join(tmpdir, "conf.py"), "w") as f:
+                f.write("print('hello world')")
+
+            script = """
+                0 / 0
+            """
+            with open(f"{tmpdir}/script.py", "w", encoding="utf-8") as f:
+                f.write(script)
+
+            stdout, _ = self.run_run(["--conf", os.path.join(tmpdir, "conf.py"),
+                                      "--path", os.path.join(tmpdir, "coredumpy_dump"),
+                                      f"{tmpdir}/script.py"])
+
+            self.assertIn("hello world", stdout)
+
     def test_except(self):
         script = """
             import coredumpy
