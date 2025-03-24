@@ -18,7 +18,6 @@ def main():
     subparsers_run.add_argument("--path", help="The path of dump file", default=None)
     subparsers_run.add_argument("--directory", help="The directory of dump file", default=None)
     subparsers_run.add_argument("--conf", help="The startup configuration file to run", default=None)
-    subparsers_run.add_argument("args", nargs="*")
 
     subparsers_load = subparsers.add_parser("load", help="Load a dump file.")
     subparsers_load.add_argument("file", type=str, help="The dump file to load.")
@@ -31,19 +30,19 @@ def main():
     subparsers_host = subparsers.add_parser("host", help="Host a DAP server.")
     subparsers_host.add_argument("--conf", help="The startup configuration file to run", default=None)
 
-    args = parser.parse_args()
+    options, args = parser.parse_known_args()
 
-    if hasattr(args, "conf") and args.conf and os.path.exists(args.conf):
-        runpy.run_path(args.conf)
+    if hasattr(options, "conf") and options.conf and os.path.exists(options.conf):
+        runpy.run_path(options.conf)
 
-    if args.command == "load":
-        if os.path.exists(args.file):
-            debugger = "ipdb" if args.ipdb else "pdb"
-            load(args.file, debugger=debugger)
+    if options.command == "load":
+        if os.path.exists(options.file):
+            debugger = "ipdb" if options.ipdb else "pdb"
+            load(options.file, debugger=debugger)
         else:
-            print(f"File {args.file} not found.")
-    elif args.command == "peek":
-        for file in args.files:
+            print(f"File {options.file} not found.")
+    elif options.command == "peek":
+        for file in options.files:
             if os.path.exists(file):
                 if os.path.isdir(file):
                     for f in os.listdir(file):
@@ -59,7 +58,7 @@ def main():
                         pass
             else:
                 print(f"File {file} not found.")
-    elif args.command == "run":
-        run(args)
-    elif args.command == "host":
+    elif options.command == "run":
+        run(options, args)
+    elif options.command == "host":
         host()

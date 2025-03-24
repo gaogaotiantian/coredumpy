@@ -333,18 +333,18 @@ class Coredumpy:
             print(textwrap.indent(data["description"], "    "))
 
     @classmethod
-    def run(cls, options):
+    def run(cls, options, args):
         if options.module:
             file = options.module
             target = _ModuleTarget(file)
         else:
-            if not options.args:
+            if not args:
                 print("Error: no script specified")
                 sys.exit(1)
-            file = options.args.pop(0)
+            file = args.pop(0)
             target = _ScriptTarget(file)
 
-        sys.argv[:] = [file] + options.args
+        sys.argv[:] = [file] + args
 
         import __main__
         __main__.__dict__.clear()

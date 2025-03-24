@@ -6,6 +6,7 @@ import contextlib
 import io
 import os
 import tempfile
+import textwrap
 
 from .base import TestBase
 
@@ -279,6 +280,25 @@ class TestBasic(TestBase):
 
             stdout, _ = self.run_peek([os.path.join(tmpdir, "nosuchfile")])
             self.assertIn("not found", stdout)
+
+    def test_script_with_options(self):
+        # Test script with options
+        script = textwrap.dedent("""
+            import sys
+            print(sys.argv[1:])
+        """)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with open(f"{tmpdir}/script.py", "w", encoding="utf-8") as f:
+                f.write(script)
+
+            stdout, _ = self.run_run([f"{tmpdir}/script.py", "arg1", "arg2"])
+            self.assertIn("['arg1', 'arg2']", stdout)
+
+            stdout, _ = self.run_run([f"{tmpdir}/script.py", "--test", "-k"])
+            self.assertIn("['--test', '-k']", stdout)
+
+            stdout, _ = self.run_run([f"{tmpdir}/script.py", "--", "-m", "module", "--path", "path"])
+            self.assertIn("['--', '-m', 'module', '--path', 'path']", stdout)
 
     def test_nonexist_file(self):
         stdout, stderr = self.run_test("", "nonexist_dump", [])
