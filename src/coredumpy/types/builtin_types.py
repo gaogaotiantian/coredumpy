@@ -271,3 +271,21 @@ class BuiltinFunctionSupport(TypeSupportBase):
         if data["value"] in builtins.__dict__:
             return builtins.__dict__[data["value"]], None
         raise NotImplementedError()
+
+
+class TypeSupport(TypeSupportBase):
+    @classmethod
+    def get_type(cls):
+        return type, "type"
+
+    @classmethod
+    def dump(cls, obj: type):
+        if obj in builtins.__dict__.values():
+            return {"type": "type", "value": obj.__name__}, None
+        raise NotImplementedError()
+
+    @classmethod
+    def load(cls, data, objects):
+        if data.get("value") in builtins.__dict__:
+            return builtins.__dict__[data["value"]], None
+        raise NotImplementedError()

@@ -136,6 +136,25 @@ class TestTypeSupport(TestBase):
         )
         self.assertIsInstance(proxy, PyObjectProxy)
 
+    def test_builtin_types(self):
+        proxy = self.convert_object(range)
+        self.assertIs(proxy, range)
+
+        class A:
+            pass
+
+        proxy = self.convert_object(A)
+        self.assertIsInstance(proxy, PyObjectProxy)
+
+        import builtins
+        builtins.__dict__["classA"] = A
+        proxy = self.convert_object(
+            builtins.classA,  # type: ignore
+            before_load=lambda: builtins.__dict__.pop("classA")
+        )
+        self.assertIsInstance(proxy, PyObjectProxy)
+
+
     def test_nonexist_attr(self):
         class A:
             def __init__(self, x):
