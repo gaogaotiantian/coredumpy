@@ -154,7 +154,6 @@ class TestTypeSupport(TestBase):
         )
         self.assertIsInstance(proxy, PyObjectProxy)
 
-
     def test_nonexist_attr(self):
         class A:
             def __init__(self, x):
