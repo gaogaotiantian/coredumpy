@@ -33,4 +33,4 @@ class TorchTensorSupport(TypeSupportContainerBase):
 
     @classmethod
     def reload(cls, container, data, objects):
-        assert False, "torch.Tensor should never be reloaded"
+        assert False, "torch.Tensor should never be reloaded"  # pragma: no cover
