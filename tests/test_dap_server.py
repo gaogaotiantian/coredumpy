@@ -425,7 +425,12 @@ class TestDapServer(TestBase):
         variables = self.do_variables(client, scopes[0]["variablesReference"])
         for var in variables:
             if var["name"] == variable:
-                return var["value"]
+                return var
+
+    def get_local_variable_value_from_frame(self, client: DapClient, frame_id, variable):
+        var = self.get_local_variable_from_frame(client, frame_id, variable)
+        if var is not None:
+            return var["value"]
 
     def test_run(self):
         with PrepareDapTest() as info:
@@ -530,6 +535,40 @@ class TestDapServer(TestBase):
             self.do_continue(client)
             self.do_disconnect(client)
 
+    def test_torch(self):
+        with PrepareDapTest() as info:
+            tmpdir, server, client = info
+            path = os.path.join(tmpdir, "coredumpy_dump")
+            script = textwrap.dedent(f"""
+                import coredumpy
+                import torch
+                def f():
+                    t = torch.tensor([[1, 2], [3, 4]])
+                    coredumpy.dump(path={repr(path)})
+                f()
+            """)
+            self.run_script(script)
+            self.do_initialize(client)
+            self.do_launch(client, path)
+            threads = self.do_threads(client)
+            self.assertEqual(len(threads), 1)
+            stack_frames = self.do_stack_trace(client, threads[0]["id"])
+
+            frame_id = stack_frames[0]["id"]
+            t = self.get_local_variable_from_frame(client, frame_id, "t")
+            self.assertIsNotNone(t)
+            assert t is not None
+            t_references = t["variablesReference"]
+            sub_tensors = self.do_variables(client, t_references)
+            self.assertEqual(len(sub_tensors), 2)
+            tensor_0 = self.do_variables(client, sub_tensors[0]["variablesReference"])
+            self.assertEqual(tensor_0[0]["name"], "0")
+            self.assertEqual(tensor_0[0]["value"], "1")
+            self.assertEqual(tensor_0[1]["name"], "1")
+            self.assertEqual(tensor_0[1]["value"], "2")
+
+            self.do_disconnect(client)
+
     def test_multithreading(self):
         with PrepareDapTest() as info:
             tmpdir, server, client = info
@@ -573,10 +612,10 @@ class TestDapServer(TestBase):
             self.assertGreaterEqual(len(worker_stack_frames), 2)
 
             frame_id = main_stack_frames[0]["id"]
-            r_val = self.get_local_variable_from_frame(client, frame_id, "r")
+            r_val = self.get_local_variable_value_from_frame(client, frame_id, "r")
             self.assertEqual(r_val, "hello")
             frame_id = worker_stack_frames[2]["id"]
-            s_val = self.get_local_variable_from_frame(client, frame_id, "s")
+            s_val = self.get_local_variable_value_from_frame(client, frame_id, "s")
             self.assertEqual(s_val, "hello")
 
             self.do_disconnect(client)
@@ -634,7 +673,7 @@ class TestDapServer(TestBase):
             self.assertEqual(len(threads), 1)
             stack_frames = self.do_stack_trace(client, threads[0]["id"])
             self.assertGreaterEqual(len(stack_frames), 2)
-            x = self.get_local_variable_from_frame(client, stack_frames[0]["id"], "x")
+            x = self.get_local_variable_value_from_frame(client, stack_frames[0]["id"], "x")
             self.assertEqual(x, "142857")
             self.do_disconnect(client)
 
@@ -662,7 +701,7 @@ class TestDapServer(TestBase):
             content = self.do_source(client, source["sourceReference"])
             self.assertIn("unavailable", content)
 
-            x = self.get_local_variable_from_frame(client, stack_frames[0]["id"], "x")
+            x = self.get_local_variable_value_from_frame(client, stack_frames[0]["id"], "x")
             self.assertEqual(x, "142857")
             self.do_disconnect(client)
 

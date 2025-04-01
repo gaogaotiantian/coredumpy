@@ -13,6 +13,7 @@ from .pytest_hook import patch_pytest
 from .type_support import TypeSupportBase, TypeSupportContainerBase, NotReady
 from .unittest_hook import patch_unittest
 from .conf_hook import startup_conf
+from .types import builtin_types, torch_types  # noqa: F401
 
 startup_conf()
 
