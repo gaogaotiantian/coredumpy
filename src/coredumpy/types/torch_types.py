@@ -17,7 +17,7 @@ class TorchTensorSupport(TypeSupportContainerBase):
                 return torch.Tensor
             return None
         return lazy, "torch.Tensor"
-    
+
     @classmethod
     def dump(cls, obj):
         import torch
