@@ -12,4 +12,4 @@ coverage
 # Test
 pytest
 ipython
-pytorch
+torch
