@@ -154,6 +154,12 @@ class TestTypeSupport(TestBase):
         )
         self.assertIsInstance(proxy, PyObjectProxy)
 
+    def test_torch(self):
+        import torch
+        t = torch.Tensor([[1, 2], [3, 4]])
+        proxy = self.convert_object(t)
+        self.assertTrue((proxy == t).all())
+
     def test_nonexist_attr(self):
         class A:
             def __init__(self, x):

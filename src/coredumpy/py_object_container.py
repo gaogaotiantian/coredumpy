@@ -5,7 +5,6 @@ import queue
 import time
 
 from .config import config
-from .types import builtin_types  # noqa: F401
 from .type_support import TypeSupportManager, NotReady
 from .py_object_proxy import PyObjectProxy, _unknown
 
@@ -92,6 +91,10 @@ class PyObjectContainer:
 
             if proxy is not NotReady:
                 self._proxies[obj_id] = proxy
+        # We could have imported some new libs while loading the objects,
+        # so we need to load lazy supports again to make sure we have all the
+        # encoders listed
+        TypeSupportManager.load_lazy_supports()
 
     def get_object(self, obj_id):
         return self._proxies.get(obj_id, _unknown)

@@ -393,6 +393,17 @@ class CoredumpyDebugger:
             it = {attr: getattr(obj, attr) for attr in dir(obj)}.items()
         elif isinstance(obj, (set, frozenset, list, tuple)):
             it = enumerate(obj)
+        elif isinstance(obj, getattr(sys.modules.get("torch"), "Tensor", type(None))):
+            import torch
+            assert isinstance(obj, torch.Tensor)
+            if obj.dim() == 1:
+                it = {i: t.item() for i, t in enumerate(obj)}.items()
+            else:
+                data = {}
+                for i, t in enumerate(obj):
+                    self.id_adapter.add(t, id(t))
+                    data[i] = t
+                it = data.items()
         else:  # pragma: no cover
             print("unexpected type", type(obj))
             return []
