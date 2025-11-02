@@ -34,6 +34,7 @@ class _Config:
         if annotated_type is not None:
             if isinstance(annotated_type, GenericAlias):
                 # Handle generic types like List, Dict, etc.
+                assert isinstance(annotated_type.__origin__, type)
                 if not isinstance(value, annotated_type.__origin__):
                     raise ValueError(f"Expected type {annotated_type} for {name}, got {type(value)}")
             elif not isinstance(value, annotated_type):
