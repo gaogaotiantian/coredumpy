@@ -212,10 +212,8 @@ class TestBasic(TestBase):
     def test_except_exclude(self):
         script = """
             import coredumpy
-            class CustomError(Exception):
-                pass
-            coredumpy.patch_except(path='coredumpy_dump', exclude=[CustomError])
-            raise CustomError
+            coredumpy.patch_except(path='coredumpy_dump', exclude=[ValueError])
+            raise ValueError
         """
         stdout, stderr = self.run_script(script, expected_returncode=1)
         self.assertIn("CustomError", stderr)
