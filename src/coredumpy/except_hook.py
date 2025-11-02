@@ -39,7 +39,7 @@ def patch_except(path: Optional[Union[str, Callable[[], str]]] = None,
                           ''.join(traceback.format_exception(type, value, tb)).strip()])
 
     def _excepthook(type, value, tb):
-        if isinstance(type, _exclude):
+        if isinstance(value, _exclude):
             _original_excepthook(type, value, tb)
             return
 
