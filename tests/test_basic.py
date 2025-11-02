@@ -216,7 +216,7 @@ class TestBasic(TestBase):
             raise ValueError
         """
         stdout, stderr = self.run_script(script, expected_returncode=1)
-        self.assertIn("CustomError", stderr)
+        self.assertIn("ValueError", stderr)
         self.assertNotIn("Your frame stack is dumped", stdout)
 
     def test_except_exclude_sanity(self):
