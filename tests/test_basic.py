@@ -212,11 +212,13 @@ class TestBasic(TestBase):
     def test_except_exclude(self):
         script = """
             import coredumpy
-            coredumpy.patch_except(path='coredumpy_dump', exclude=[KeyboardInterrupt])
-            raise KeyboardInterrupt
+            class CustomError(Exception):
+                pass
+            coredumpy.patch_except(path='coredumpy_dump', exclude=[CustomError])
+            raise CustomError
         """
-        stdout, stderr = self.run_script(script, expected_returncode=-2)
-        self.assertIn("KeyboardInterrupt", stderr)
+        stdout, stderr = self.run_script(script, expected_returncode=1)
+        self.assertIn("CustomError", stderr)
         self.assertNotIn("Your frame stack is dumped", stdout)
 
     def test_except_exclude_sanity(self):
