@@ -49,6 +49,8 @@ Or you can patch explicitly in your code and execute the script/module as usual
 import coredumpy
 # Create a dump in "./dumps" when there's an unhandled exception
 coredumpy.patch_except(directory='./dumps')
+# Create a dump in "./dumps" only when exceptions other than KeyboardInterrupt occur
+coredumpy.patch_except(directory="./dumps", exclude=[KeyboardInterrupt])
 # Create a dump in "./dumps" when there's a unittest failure/error
 coredumpy.patch_unittest(directory='./dumps')
 # Create a dump in "./dumps" when there's a pytest failure/error
