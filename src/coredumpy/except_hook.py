@@ -8,6 +8,7 @@ from typing import Callable, Optional, Union, Iterable, Type
 
 from .coredumpy import dump
 
+
 _original_excepthook = sys.excepthook
 
 
