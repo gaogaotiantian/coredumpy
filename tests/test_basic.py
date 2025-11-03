@@ -209,6 +209,24 @@ class TestBasic(TestBase):
         self.assertIn("return 1 / arg", stdout)
         self.assertIn("0", stdout)
 
+    def test_except_exclude(self):
+        script = """
+            import coredumpy
+            coredumpy.patch_except(path='coredumpy_dump', exclude=[ValueError])
+            raise ValueError
+        """
+        stdout, stderr = self.run_script(script, expected_returncode=1)
+        self.assertIn("ValueError", stderr)
+        self.assertNotIn("Your frame stack is dumped", stdout)
+
+    def test_except_exclude_sanity(self):
+        script = """
+            import coredumpy
+            coredumpy.patch_except(path='coredumpy_dump', exclude=[int])
+        """
+        _, stderr = self.run_script(script, expected_returncode=1)
+        self.assertIn("TypeError:", stderr)
+
     def test_cli(self):
         script = """
             def g(arg):
