@@ -208,7 +208,7 @@ Python object with attributes, and that's what it records in the dump.
 That being said, most of the objects will not be "restored" as they were when
 being dumped. You are in an observer mode where you can inspect attributes of
 all objects. None of the methods of the objects would work, nor would any
-dymanic features.
+dynamic features.
 
 ### Why not `pickle`?
 
