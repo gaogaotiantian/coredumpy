@@ -2,7 +2,7 @@
 # For details: https://github.com/gaogaotiantian/coredumpy/blob/master/NOTICE.txt
 
 
-__version__ = "0.4.3"
+__version__ = "0.5.0"
 
 import coredumpy.pytest_hook as pytest_hook
 from .config import config
