@@ -30,7 +30,7 @@ class _Config:
         self.environ_filter = lambda env: len(env) > 8
 
     def __setattr__(self, name: str, value: object) -> None:
-        annotated_type = self.__annotations__.get(name)
+        annotated_type = type(self).__annotations__.get(name)
         if annotated_type is not None:
             if isinstance(annotated_type, GenericAlias):
                 # Handle generic types like List, Dict, etc.
