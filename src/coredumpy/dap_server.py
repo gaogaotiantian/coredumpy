@@ -202,10 +202,7 @@ class DebugAdapterHandler(threading.Thread):
                     self.send_response(message, {})
 
         except Exception as e:
-            if sys.version_info < (3, 10):
-                extra = "".join(traceback.format_exception(type(e), e, e.__traceback__))
-            else:
-                extra = "".join(traceback.format_exception(e))
+            extra = "".join(traceback.format_exception(e))
             self.send_error_response(message, extra)
 
     def send_message(self, message: Dict[str, Any]):
@@ -427,15 +424,9 @@ class CoredumpyDebugger:
             try:
                 exec(expression, f_globals, f_locals)
             except Exception as e:
-                if sys.version_info < (3, 10):
-                    return "".join(traceback.format_exception_only(type(e), e))
-                else:
-                    return "".join(traceback.format_exception_only(e))
-        except Exception as e:
-            if sys.version_info < (3, 10):
-                return "".join(traceback.format_exception_only(type(e), e))
-            else:
                 return "".join(traceback.format_exception_only(e))
+        except Exception as e:
+            return "".join(traceback.format_exception_only(e))
 
         return ""
 
